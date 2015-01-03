@@ -29,7 +29,7 @@ public class UnitTestParams extends NetworkParameters {
     public UnitTestParams() {
         super();
         id = ID_UNITTESTNET;
-        packetMagic = 0x0b110907;
+        packetMagic = 0x0b110908;
         addressHeader = 111;
         p2shHeader = 196;
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };

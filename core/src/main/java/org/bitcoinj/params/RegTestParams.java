@@ -35,6 +35,7 @@ public class RegTestParams extends TestNet2Params {
         subsidyDecreaseBlockCount = 150;
         port = 18444;
         id = ID_REGTEST;
+        packetMagic = 0xfabfb5db;
     }
 
     @Override
