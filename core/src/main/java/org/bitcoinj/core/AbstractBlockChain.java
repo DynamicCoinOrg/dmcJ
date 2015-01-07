@@ -841,7 +841,17 @@ public abstract class AbstractBlockChain {
     private void checkDifficultyTransitions(StoredBlock storedPrev, Block nextBlock) throws BlockStoreException, VerificationException {
         checkState(lock.isHeldByCurrentThread());
         Block prev = storedPrev.getHeader();
-        
+
+        final long timeDelta = nextBlock.getTimeSeconds() - prev.getTimeSeconds();
+        if (timeDelta >= 0 && timeDelta > NetworkParameters.TARGET_SPACING * 2) {
+            if (nextBlock.getDifficultyTarget() != prev.getDifficultyTarget())
+                throw new VerificationException("Unexpected change in difficulty for distant blocks at height" + storedPrev.getHeight() +
+                        ": " + Long.toHexString(nextBlock.getDifficultyTarget()) + " vs " +
+                        Long.toHexString(prev.getDifficultyTarget()));
+            else
+                return;
+        }
+
         // Is this supposed to be a difficulty transition point?
         if ((storedPrev.getHeight() + 1) % params.getInterval() != 0) {
 
