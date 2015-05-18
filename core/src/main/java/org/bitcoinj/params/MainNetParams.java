@@ -48,11 +48,7 @@ public class MainNetParams extends NetworkParameters {
                 genesisHash);
 
         dnsSeeds = new String[] {
-                "seed.bitcoin.sipa.be",        // Pieter Wuille
-                "dnsseed.bluematt.me",         // Matt Corallo
-                "dnsseed.bitcoin.dashjr.org",  // Luke Dashjr
-                "seed.bitcoinstats.com",       // Chris Decker
-                "seed.bitnodes.io",            // Addy Yeow
+                "main.seeds.dynamiccoin.org"
         };
     }
 
