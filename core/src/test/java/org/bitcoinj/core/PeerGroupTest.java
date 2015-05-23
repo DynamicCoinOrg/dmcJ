@@ -687,14 +687,14 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void preferLocalPeer() throws IOException {
-        // Because we are using the same port (8333 or 18333) that is used by Satoshi client
+        // Because we are using the same port (7333 or 17333) that is used by DMC client
         // We have to consider 2 cases:
-        // 1. Test are executed on the same machine that is running full node / Satoshi client
+        // 1. Test are executed on the same machine that is running full node / DMC client
         // 2. Test are executed without any full node running locally
         // We have to avoid to connecting to real and external services in unit tests
         // So we skip this test in case we have already something running on port params.getPort()
 
-        // Check that if we have a localhost port 8333 or 18333 then it's used instead of the p2p network.
+        // Check that if we have a localhost port 7333 or 17333 then it's used instead of the p2p network.
         ServerSocket local = null;
         try {
             local = new ServerSocket(params.getPort(), 100, InetAddresses.forString("127.0.0.1"));

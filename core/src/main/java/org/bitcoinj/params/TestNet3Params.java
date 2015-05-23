@@ -34,8 +34,8 @@ public class TestNet3Params extends NetworkParameters {
         packetMagic = 0x0b110908;
         interval = INTERVAL;
         targetTimespan = TARGET_TIMESPAN;
-        port = 18333;
         maxTarget = Utils.decodeCompactBits(0x1e00ffffL);
+        port = 17333;
         addressHeader = 111;
         p2shHeader = 196;
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };

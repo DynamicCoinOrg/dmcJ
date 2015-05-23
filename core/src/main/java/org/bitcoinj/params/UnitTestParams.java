@@ -37,7 +37,7 @@ public class UnitTestParams extends NetworkParameters {
         genesisBlock.setTime(System.currentTimeMillis() / 1000);
         genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
         genesisBlock.solve();
-        port = 18333;
+        port = 17333;
         interval = 10;
         dumpedPrivateKeyHeader = 239;
         interval = INTERVAL;
