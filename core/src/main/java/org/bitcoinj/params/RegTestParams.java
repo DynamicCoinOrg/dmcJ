@@ -32,7 +32,6 @@ public class RegTestParams extends TestNet2Params {
         super();
         interval = 10000;
         maxTarget = MAX_TARGET;
-        subsidyDecreaseBlockCount = 150;
         port = 18444;
         id = ID_REGTEST;
         packetMagic = 0xfabfb5db;

@@ -37,15 +37,24 @@ public class MainNetParams extends NetworkParameters {
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         port = 8333;
         packetMagic = 0xf9beb4e0L;
-        genesisBlock.setDifficultyTarget(0x1d00ffffL);
-        genesisBlock.setTime(1231006505L);
-        genesisBlock.setNonce(2083236893);
+        genesisBlock.setDifficultyTarget(0x1e00ffffL);
+        genesisBlock.setTime(1429025136L);
+        genesisBlock.setNonce(5987573);
         id = ID_MAINNET;
-        subsidyDecreaseBlockCount = 210000;
         spendableCoinbaseDepth = 100;
+
+        // A script containing the difficulty bits and the following message:
+        //
+        //   "DynamicCoin genesis / MainNet"
+        CharSequence inputScriptHex = "04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73";
+        genesisBlock = createGenesis(this, inputScriptHex);
         String genesisHash = genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"),
-                genesisHash);
+        checkState(genesisHash.equals("0000008b8a462251c714e1533ce9004f4a36e973673e70b99f54994588eae567"),
+                   genesisHash);
+
+        alertSigningKey = Utils.HEX.decode("04db94e84b7bc99965a368efb0a7b7773715ff61d46bbfa27ecc5f30572e9e50191b58b3c53bd6564e1f9b0a0041b6e45d5124516e475fbd85c4245b8f22213141");
+
+        checkpoints.put(0, new Sha256Hash("0000008b8a462251c714e1533ce9004f4a36e973673e70b99f54994588eae567"));
 
         dnsSeeds = new String[] {
                 "main.seeds.dynamiccoin.org"

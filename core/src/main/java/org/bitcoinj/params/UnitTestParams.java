@@ -40,9 +40,9 @@ public class UnitTestParams extends NetworkParameters {
         port = 18333;
         interval = 10;
         dumpedPrivateKeyHeader = 239;
-        targetTimespan = 200000000;  // 6 years. Just a very big number.
+        interval = INTERVAL;
+        targetTimespan = TARGET_TIMESPAN;
         spendableCoinbaseDepth = 5;
-        subsidyDecreaseBlockCount = 100;
         dnsSeeds = null;
     }
 

@@ -303,7 +303,7 @@ public class WalletProtobufSerializerTest {
     @Test
     public void coinbaseTxns() throws Exception {
         // Covers issue 420 where the outpoint index of a coinbase tx input was being mis-serialized.
-        Block b = params.getGenesisBlock().createNextBlockWithCoinbase(myKey.getPubKey(), FIFTY_COINS);
+        Block b = params.getGenesisBlock().createNextBlockWithCoinbase(myKey.getPubKey(), ONE_KIBI_COINS);
         Transaction coinbase = b.getTransactions().get(0);
         assertTrue(coinbase.isCoinBase());
         BlockChain chain = new BlockChain(params, myWallet, new MemoryBlockStore(params));

@@ -36,7 +36,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.bitcoinj.core.Coin.FIFTY_COINS;
+import static org.bitcoinj.core.Coin.ONE_KIBI_COINS;
 import static org.bitcoinj.core.Utils.doubleDigest;
 import static org.bitcoinj.core.Utils.doubleDigestTwoBuffers;
 
@@ -104,8 +104,8 @@ public class Block extends Message {
     Block(NetworkParameters params) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
-        version = 1;
-        difficultyTarget = 0x1d07fff8L;
+        version = 3;
+        difficultyTarget = 0x1e00ffffL;
         time = System.currentTimeMillis() / 1000;
         prevBlockHash = Sha256Hash.ZERO_HASH;
 
@@ -161,15 +161,10 @@ public class Block extends Message {
 
     /**
      * <p>A utility method that calculates how much new Bitcoin would be created by the block at the given height.
-     * The inflation of Bitcoin is predictable and drops roughly every 4 years (210,000 blocks). At the dawn of
-     * the system it was 50 coins per block, in late 2012 it went to 25 coins per block, and so on. The size of
-     * a coinbase transaction is inflation plus fees.</p>
-     *
-     * <p>The half-life is controlled by {@link org.bitcoinj.core.NetworkParameters#getSubsidyDecreaseBlockCount()}.
      * </p>
      */
     public Coin getBlockInflation(int height) {
-        return FIFTY_COINS.shiftRight(height / params.getSubsidyDecreaseBlockCount());
+        return ONE_KIBI_COINS;
     }
 
     private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
@@ -990,7 +985,7 @@ public class Block extends Message {
      */
     @VisibleForTesting
     public Block createNextBlock(Address to, long time) {
-        return createNextBlock(to, null, time, pubkeyForTesting, FIFTY_COINS);
+        return createNextBlock(to, null, time, pubkeyForTesting, ONE_KIBI_COINS);
     }
 
     /**
@@ -1006,7 +1001,7 @@ public class Block extends Message {
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
             Transaction t = new Transaction(params);
-            t.addOutput(new TransactionOutput(params, t, FIFTY_COINS, to));
+            t.addOutput(new TransactionOutput(params, t, ONE_KIBI_COINS, to));
             // The input does not really need to be a valid signature, as long as it has the right general form.
             TransactionInput input;
             if (prevOut == null) {
@@ -1041,7 +1036,7 @@ public class Block extends Message {
 
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut) {
-        return createNextBlock(to, prevOut, Utils.currentTimeSeconds(), pubkeyForTesting, FIFTY_COINS);
+        return createNextBlock(to, prevOut, Utils.currentTimeSeconds(), pubkeyForTesting, ONE_KIBI_COINS);
     }
 
     @VisibleForTesting
@@ -1051,7 +1046,7 @@ public class Block extends Message {
 
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to) {
-        return createNextBlock(to, FIFTY_COINS);
+        return createNextBlock(to, ONE_KIBI_COINS);
     }
 
     @VisibleForTesting
@@ -1065,7 +1060,7 @@ public class Block extends Message {
      */
     @VisibleForTesting
     Block createNextBlockWithCoinbase(byte[] pubKey) {
-        return createNextBlock(null, null, Utils.currentTimeSeconds(), pubKey, FIFTY_COINS);
+        return createNextBlock(null, null, Utils.currentTimeSeconds(), pubKey, ONE_KIBI_COINS);
     }
 
     @VisibleForTesting

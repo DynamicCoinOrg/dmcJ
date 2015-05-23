@@ -45,9 +45,9 @@ public abstract class NetworkParameters implements Serializable {
     public static final int PROTOCOL_VERSION = 70001;
 
     /**
-     * The alert signing key originally owned by Satoshi, and now passed on to Gavin along with a few others.
+     * The alert signing key
      */
-    public static final byte[] SATOSHI_KEY = Utils.HEX.decode("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
+    public static final byte[] ALERT_KEY = Utils.HEX.decode("04db94e84b7bc99965a368efb0a7b7773715ff61d46bbfa27ecc5f30572e9e50191b58b3c53bd6564e1f9b0a0041b6e45d5124516e475fbd85c4245b8f22213141");
 
     /** The string returned by getId() for the main, production network where people trade things. */
     public static final String ID_MAINNET = "org.bitcoin.production";
@@ -86,32 +86,25 @@ public abstract class NetworkParameters implements Serializable {
      * The depth of blocks required for a coinbase transaction to be spendable.
      */
     protected int spendableCoinbaseDepth;
-    protected int subsidyDecreaseBlockCount;
-    
+
     protected int[] acceptableAddressCodes;
     protected String[] dnsSeeds;
     protected Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
 
     protected NetworkParameters() {
-        alertSigningKey = SATOSHI_KEY;
-        genesisBlock = createGenesis(this);
+        alertSigningKey = ALERT_KEY;
     }
 
-    private static Block createGenesis(NetworkParameters n) {
+    protected static Block createGenesis(NetworkParameters n, CharSequence inputScriptHex) {
         Block genesisBlock = new Block(n);
         Transaction t = new Transaction(n);
         try {
-            // A script containing the difficulty bits and the following message:
-            //
-            //   "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks"
-            byte[] bytes = Utils.HEX.decode
-                    ("04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73");
+            byte[] bytes = Utils.HEX.decode(inputScriptHex);
             t.addInput(new TransactionInput(n, t, bytes));
             ByteArrayOutputStream scriptPubKeyBytes = new ByteArrayOutputStream();
-            Script.writeBytes(scriptPubKeyBytes, Utils.HEX.decode
-                    ("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
+            Script.writeBytes(scriptPubKeyBytes, Utils.HEX.decode("04d5097dbafdba541ea1e7000f70190a066fe006fdbc807944d51cb6fe3fdab435c1c342b72fc7b4b9b34e4809e24a9f988b0039f27b62ef7ac298ebd4350c13f2"));
             scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
-            t.addOutput(new TransactionOutput(n, t, FIFTY_COINS, scriptPubKeyBytes.toByteArray()));
+            t.addOutput(new TransactionOutput(n, t, ONE_KIBI_COINS, scriptPubKeyBytes.toByteArray()));
         } catch (Exception e) {
             // Cannot happen.
             throw new RuntimeException(e);
@@ -245,10 +238,6 @@ public abstract class NetworkParameters implements Serializable {
     public boolean isCheckpoint(int height) {
         Sha256Hash checkpointHash = checkpoints.get(height);
         return checkpointHash != null;
-    }
-
-    public int getSubsidyDecreaseBlockCount() {
-        return subsidyDecreaseBlockCount;
     }
 
     /** Returns DNS names that when resolved, give IP addresses of active peers. */
