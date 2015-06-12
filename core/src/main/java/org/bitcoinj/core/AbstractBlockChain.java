@@ -833,19 +833,70 @@ public abstract class AbstractBlockChain {
         } while (blocksConnectedThisRound > 0);
     }
 
-    // February 16th 2012
-    private static final Date testnetDiffDate = new Date(1329264000000L);
+    /**
+     * The number that is one greater than the largest representable SHA-256
+     * hash.
+     */
+    static private BigInteger LARGEST_HASH = BigInteger.ONE.shiftLeft(256);
+
+    private BigInteger getWorkForDifficulty(BigInteger difficulty) {
+        return LARGEST_HASH.divide(difficulty.add(BigInteger.ONE));
+    }
 
     /**
      * Throws an exception if the blocks difficulty is not correct.
      */
     private void checkDifficultyTransitions(StoredBlock storedPrev, Block nextBlock) throws BlockStoreException, VerificationException {
         checkState(lock.isHeldByCurrentThread());
+        BigInteger proofOfWorkLimit = params.getMaxTarget();
+        long proofOfWorkLimitNBits = Utils.encodeCompactBits(proofOfWorkLimit);
+
+        if (storedPrev == null) {
+            if (proofOfWorkLimit.compareTo(nextBlock.getDifficultyTargetAsInteger()) < 0) {
+                throw new VerificationException("Unexpected difficulty for genesis block" +
+                        ": " + Long.toHexString(nextBlock.getDifficultyTarget()) + ", but must be >=" +
+                        Long.toHexString(proofOfWorkLimitNBits));
+            }
+        }
         Block prev = storedPrev.getHeader();
 
-        final long timeDelta = nextBlock.getTimeSeconds() - prev.getTimeSeconds();
-        if (timeDelta >= 0 && timeDelta > NetworkParameters.TARGET_SPACING * 2) {
-            if (nextBlock.getDifficultyTarget() != prev.getDifficultyTarget())
+        // TODO: Refactor this hack after 0.5 is released and we stop supporting deserialization compatibility.
+        // This should be a method of the NetworkParameters, which should in turn be using singletons and a subclass
+        // for each network type. Then each network can define its own difficulty transition rules.
+        if (params.getId().equals(NetworkParameters.ID_TESTNET)) {
+            checkTestnetDifficulty(storedPrev, prev, nextBlock);
+            return;
+        }
+
+        int diffWindow = params.getInterval();
+        int diffTimestampOutlierCutoff = 60;
+
+        ArrayList<Date> timestamps = new ArrayList<Date>(diffWindow);
+        ArrayList<BigInteger> chainWorks = new ArrayList<BigInteger>(diffWindow);
+
+        // Go back by `Interval` blocks (Interval = nTargetTimespan / nTargetSpacing)
+        // We need to find a block far back in the chain. It's OK that this is expensive because it only occurs every
+        // two weeks after the initial block chain download.
+        long now = System.currentTimeMillis();
+        StoredBlock cursor = blockStore.get(prev.getHash());
+        for (int i = 0; cursor != null && i < diffWindow - 1; i++) {
+            timestamps.add(cursor.getHeader().getTime());
+            chainWorks.add(cursor.getChainWork());
+
+            cursor = blockStore.get(cursor.getHeader().getPrevBlockHash());
+        }
+        long elapsed = System.currentTimeMillis() - now;
+        if (elapsed > 50)
+            log.info("Difficulty transition traversal took {}msec", elapsed);
+
+
+        int length = timestamps.size();
+        if (length != chainWorks.size()) {
+            throw new VerificationException("Assertion (length == chainWorks.size()) failed " +
+                                            "– can't verify difficulty transition");
+        }
+        if (length <= 1) {
+            if (nextBlock.getDifficultyTargetAsInteger().compareTo(proofOfWorkLimit) != 0)
                 throw new VerificationException("Unexpected change in difficulty for distant blocks at height" + storedPrev.getHeight() +
                         ": " + Long.toHexString(nextBlock.getDifficultyTarget()) + " vs " +
                         Long.toHexString(prev.getDifficultyTarget()));
@@ -853,94 +904,88 @@ public abstract class AbstractBlockChain {
                 return;
         }
 
-        // Is this supposed to be a difficulty transition point?
-        if ((storedPrev.getHeight() + 1) % params.getInterval() != 0) {
+        if (diffWindow < 2) {
+            throw new VerificationException("Difficulty window is too small " +
+                                            "– can't verify difficulty transition");
+        }
+        if (length > diffWindow) {
+            throw new VerificationException("Assertion (length <= diff_window) failed " +
+                                            "– can't verify difficulty transition");
+        }
+        Collections.sort(timestamps, Collections.reverseOrder());   // std::sort(timestamps.begin(), timestamps.end(), std::greater<int64_t>());
 
-            // TODO: Refactor this hack after 0.5 is released and we stop supporting deserialization compatibility.
-            // This should be a method of the NetworkParameters, which should in turn be using singletons and a subclass
-            // for each network type. Then each network can define its own difficulty transition rules.
-            if (params.getId().equals(NetworkParameters.ID_TESTNET) && nextBlock.getTime().after(testnetDiffDate)) {
-                checkTestnetDifficulty(storedPrev, prev, nextBlock);
-                return;
-            }
+        // cut off timestamp outliers
+        int cutoffBegin = length;
+        int cutoffEnd   = 0;
 
-            // No ... so check the difficulty didn't actually change.
-            if (nextBlock.getDifficultyTarget() != prev.getDifficultyTarget())
-                throw new VerificationException("Unexpected change in difficulty at height " + storedPrev.getHeight() +
-                        ": " + Long.toHexString(nextBlock.getDifficultyTarget()) + " vs " +
-                        Long.toHexString(prev.getDifficultyTarget()));
-            return;
+        // static_assert(2 * diffTimestampOutlierCutoff <= diffWindow - 2, "Cut length is too large");
+        int timestampCore = diffWindow - 2 * diffTimestampOutlierCutoff;
+        if (length > timestampCore) {
+            cutoffBegin = (length - timestampCore + 1) / 2;
+            cutoffEnd   = cutoffBegin + timestampCore;
+        }
+        // assert(/*cutoffBegin >= 0 &&*/ cutoffEnd + 2 <= cutoffBegin && cutoffBegin <= length);
+
+        long targetTimespan = params.getTargetTimespan();
+        long actualTimespan = timestamps.get(cutoffEnd).getTime() - timestamps.get(cutoffBegin - 1).getTime();
+        BigInteger totalWork = chainWorks.get(cutoffEnd).subtract(chainWorks.get(cutoffBegin - 1));
+        log.debug("targetTimespan = {}", targetTimespan);
+        log.debug("actualTimespan = {}", actualTimespan);
+        log.debug("totalWork = {}, firstChainWork = {}, lastChainWork = {}",
+                   totalWork.doubleValue(), chainWorks.get(cutoffBegin - 1).doubleValue(),
+                   chainWorks.get(cutoffEnd).doubleValue());
+
+        if (actualTimespan == 0) {
+            actualTimespan = 1;
+        }
+        if (totalWork.compareTo(BigInteger.ZERO) == -1) {   // assert(nTotalWork > 0);
+            throw new VerificationException("Assertion (totalWork > 0) failed " +
+                    "– can't verify difficulty transition");
         }
 
-        // We need to find a block far back in the chain. It's OK that this is expensive because it only occurs every
-        // two weeks after the initial block chain download.
-        long now = System.currentTimeMillis();
-        StoredBlock cursor = blockStore.get(prev.getHash());
-        for (int i = 0; i < params.getInterval() - 1; i++) {
-            if (cursor == null) {
-                // This should never happen. If it does, it means we are following an incorrect or busted chain.
-                throw new VerificationException(
-                        "Difficulty transition point but we did not find a way back to the genesis block.");
-            }
-            cursor = blockStore.get(cursor.getHeader().getPrevBlockHash());
-        }
-        long elapsed = System.currentTimeMillis() - now;
-        if (elapsed > 50)
-            log.info("Difficulty transition traversal took {}msec", elapsed);
+        // Retarget
+        BigInteger newHashes = totalWork;
+        newHashes.multiply(BigInteger.valueOf(params.TARGET_SPACING))
+                .add(BigInteger.valueOf(actualTimespan))
+                .subtract(BigInteger.valueOf(-1))
+                .divide(BigInteger.valueOf(actualTimespan));
 
-        Block blockIntervalAgo = cursor.getHeader();
-        int timespan = (int) (prev.getTimeSeconds() - blockIntervalAgo.getTimeSeconds());
-        // Limit the adjustment step.
-        final int targetTimespan = params.getTargetTimespan();
-        if (timespan < targetTimespan / 4)
-            timespan = targetTimespan / 4;
-        if (timespan > targetTimespan * 4)
-            timespan = targetTimespan * 4;
-
-        BigInteger newTarget = Utils.decodeCompactBits(prev.getDifficultyTarget());
-        newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
-        newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
-
-        if (newTarget.compareTo(params.getMaxTarget()) > 0) {
-            log.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
-            newTarget = params.getMaxTarget();
+        BigInteger newPow;
+        BigInteger proofOfWorkLimitWork = getWorkForDifficulty(proofOfWorkLimit);
+        if (newHashes.compareTo(proofOfWorkLimitWork) < 0
+                || newHashes.equals(proofOfWorkLimitWork)) {
+            newPow = proofOfWorkLimit;
+        } else {
+            BigInteger powPerHash = proofOfWorkLimit.divide(proofOfWorkLimitWork);
+            newPow = newHashes.multiply(powPerHash).subtract(BigInteger.ONE);
         }
 
-        int accuracyBytes = (int) (nextBlock.getDifficultyTarget() >>> 24) - 3;
-        long receivedTargetCompact = nextBlock.getDifficultyTarget();
+        // debug print
+        log.debug("GetNextWorkRequired RETARGET");
+        log.debug("Params().TargetTimespan() = {}  nActualTimespan = {}", params.getTargetTimespan(), actualTimespan);
+        log.debug("Before:            {}", prev.getDifficultyTarget(), prev.getDifficultyTargetAsInteger());
+        log.debug("After (expected):  {}", Utils.encodeCompactBits(newPow), newPow);
 
-        // The calculated difficulty is to a higher precision than received, so reduce here.
-        BigInteger mask = BigInteger.valueOf(0xFFFFFFL).shiftLeft(accuracyBytes * 8);
-        newTarget = newTarget.and(mask);
-        long newTargetCompact = Utils.encodeCompactBits(newTarget);
-
-        if (newTargetCompact != receivedTargetCompact)
-            throw new VerificationException("Network provided difficulty bits do not match what was calculated: " +
-                    newTargetCompact + " vs " + receivedTargetCompact);
+        if (newPow.compareTo(nextBlock.getDifficultyTargetAsInteger()) < 0) {
+            throw new VerificationException("Network provided difficulty bits do not match what was calculated" +
+                    ": " + Long.toHexString(nextBlock.getDifficultyTarget()) + ", but must be >=" +
+                    Long.toHexString(Utils.encodeCompactBits(newPow)));
+        }
     }
 
     private void checkTestnetDifficulty(StoredBlock storedPrev, Block prev, Block next) throws VerificationException, BlockStoreException {
         checkState(lock.isHeldByCurrentThread());
-        // After 15th February 2012 the rules on the testnet change to avoid people running up the difficulty
-        // and then leaving, making it too hard to mine a block. On non-difficulty transition points, easy
-        // blocks are allowed if there has been a span of 20 minutes without one.
+        BigInteger proofOfWorkLimit = params.getMaxTarget();
+        long proofOfWorkLimitNBits = Utils.encodeCompactBits(proofOfWorkLimit);
+
         final long timeDelta = next.getTimeSeconds() - prev.getTimeSeconds();
-        // There is an integer underflow bug in bitcoin-qt that means mindiff blocks are accepted when time
-        // goes backwards.
-        if (timeDelta >= 0 && timeDelta <= NetworkParameters.TARGET_SPACING * 2) {
-            // Walk backwards until we find a block that doesn't have the easiest proof of work, then check
-            // that difficulty is equal to that one.
-            StoredBlock cursor = storedPrev;
-            while (!cursor.getHeader().equals(params.getGenesisBlock()) &&
-                   cursor.getHeight() % params.getInterval() != 0 &&
-                   cursor.getHeader().getDifficultyTargetAsInteger().equals(params.getMaxTarget()))
-                cursor = cursor.getPrev(blockStore);
-            BigInteger cursorTarget = cursor.getHeader().getDifficultyTargetAsInteger();
-            BigInteger newTarget = next.getDifficultyTargetAsInteger();
-            if (!cursorTarget.equals(newTarget))
-                throw new VerificationException("Testnet block transition that is not allowed: " +
-                    Long.toHexString(cursor.getHeader().getDifficultyTarget()) + " vs " +
-                    Long.toHexString(next.getDifficultyTarget()));
+        if (timeDelta >= 0 && timeDelta > NetworkParameters.TARGET_SPACING * 2) {
+            if (proofOfWorkLimit.compareTo(next.getDifficultyTargetAsInteger()) < 0)
+                throw new VerificationException("Unexpected change in difficulty for distant blocks at height" + storedPrev.getHeight() +
+                        ": " + Long.toHexString(next.getDifficultyTarget()) + ", but must be >=" +
+                        Long.toHexString(proofOfWorkLimitNBits));
+            else
+                return;
         }
     }
 
