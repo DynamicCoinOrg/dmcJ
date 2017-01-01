@@ -40,6 +40,7 @@ import java.util.List;
 import static org.bitcoinj.core.Coin.ONE_KIBI_COINS;
 import static org.bitcoinj.core.Utils.doubleDigest;
 import static org.bitcoinj.core.Utils.doubleDigestTwoBuffers;
+import static org.bitcoinj.core.Utils.quadrupleDigest;
 
 /**
  * <p>A block is a group of transactions, and is one of the fundamental data structures of the Bitcoin system.
@@ -76,6 +77,13 @@ public class Block extends Message {
     /** A value for difficultyTarget (nBits) that allows half of all possible hash solutions. Used in unit testing. */
     public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
 
+    public static final long BLOCK_VERSION_0_1 = (0 << 16) | 1;
+    public static final long BLOCK_VERSION_0_2 = (0 << 16) | 2;
+    public static final long BLOCK_VERSION_0_3 = (0 << 16) | 3;
+    public static final long BLOCK_VERSION_1_3 = (1 << 16) | 3;
+
+    public static final long BLOCK_VERSION_CURRENT = BLOCK_VERSION_1_3;
+
     // Fields defined as part of the protocol format.
     private long version;
     private Sha256Hash prevBlockHash;
@@ -89,6 +97,7 @@ public class Block extends Message {
 
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private transient Sha256Hash hash;
+    private transient Sha256Hash pow;
 
     private transient boolean headerParsed;
     private transient boolean transactionsParsed;
@@ -105,7 +114,7 @@ public class Block extends Message {
     Block(NetworkParameters params) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
-        version = 3;
+        version = BLOCK_VERSION_CURRENT;
         difficultyTarget = 0x1e00ffffL;
         time = System.currentTimeMillis() / 1000;
         prevBlockHash = Sha256Hash.ZERO_HASH;
@@ -513,6 +522,19 @@ public class Block extends Message {
         }
     }
 
+    private Sha256Hash calculatePowHash() {
+        if (version < BLOCK_VERSION_1_3) {
+            return calculateHash();
+        }
+        try {
+            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(HEADER_SIZE);
+            writeHeader(bos);
+            return new Sha256Hash(Utils.reverseBytes(quadrupleDigest(bos.toByteArray())));
+        } catch (IOException e) {
+            throw new RuntimeException(e); // Cannot happen.
+        }
+    }
+
     /**
      * Returns the hash of the block (which for a valid, solved block should be below the target) in the form seen on
      * the block explorer. If you call this on block 1 in the production chain
@@ -531,6 +553,12 @@ public class Block extends Message {
         if (hash == null)
             hash = calculateHash();
         return hash;
+    }
+
+    public Sha256Hash getPow() {
+        if (pow == null)
+            pow = calculatePowHash();
+        return pow;
     }
 
     /**
@@ -649,7 +677,7 @@ public class Block extends Message {
         // field is of the right value. This requires us to have the preceeding blocks.
         BigInteger target = getDifficultyTargetAsInteger();
 
-        BigInteger h = getHash().toBigInteger();
+        BigInteger h = getPow().toBigInteger();
         if (h.compareTo(target) > 0) {
             // Proof of work check failed!
             if (throwException)

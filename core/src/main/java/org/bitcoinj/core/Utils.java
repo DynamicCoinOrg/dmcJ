@@ -142,6 +142,27 @@ public class Utils {
     }
 
     /**
+     * See {@link Utils#quadrupleDigest(byte[], int, int)}.
+     */
+    public static byte[] quadrupleDigest(byte[] input) {
+        return quadrupleDigest(input, 0, input.length);
+    }
+
+    /**
+     * Standard DMC pow digest
+     */
+    public static byte[] quadrupleDigest(byte[] input, int offset, int length) {
+        synchronized (digest) {
+            digest.reset();
+            digest.update(input, offset, length);
+            byte[] first  = digest.digest();
+            byte[] second = digest.digest(first);
+            byte[] third  = digest.digest(second);
+            return digest.digest(third);
+        }
+    }
+
+    /**
      * See {@link Utils#doubleDigest(byte[], int, int)}.
      */
     public static byte[] doubleDigest(byte[] input) {

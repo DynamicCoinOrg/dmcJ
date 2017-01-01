@@ -74,6 +74,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
         return new Sha256Hash(Utils.doubleDigest(contents));
     }
 
+    public static Sha256Hash createQuadruple(byte[] contents) { return new Sha256Hash(Utils.quadrupleDigest(contents)); }
+
     /**
      * Returns a hash of the given files contents. Reads the file fully into memory before hashing so only use with
      * small files.
