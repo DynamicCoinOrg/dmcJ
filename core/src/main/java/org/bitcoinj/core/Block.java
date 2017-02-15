@@ -168,15 +168,6 @@ public class Block extends Message {
         this.transactions.addAll(transactions);
     }
 
-
-    /**
-     * <p>A utility method that calculates how much new Bitcoin would be created by the block at the given height.
-     * </p>
-     */
-    public Coin getBlockInflation(int height) {
-        return ONE_KIBI_COINS;
-    }
-
     private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
         ois.defaultReadObject();
         // This code is not actually necessary, as transient fields are initialized to the default value which is in
@@ -1110,5 +1101,25 @@ public class Block extends Message {
     @VisibleForTesting
     boolean isTransactionBytesValid() {
         return transactionBytesValid;
+    }
+
+    public Coin getReward() {
+        Coin blockFee = Coin.ZERO;
+        Coin coinbaseValue = Coin.ZERO;
+        for (final Transaction tx : getTransactions()) {
+            if (!tx.isCoinBase()) {
+                blockFee.add(tx.getFee());
+            } else {
+                for (final TransactionOutput out : tx.getOutputs()) {
+                    coinbaseValue.add(out.getValue());
+                }
+            }
+
+        }
+        return coinbaseValue.subtract(blockFee);
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
     }
 }
