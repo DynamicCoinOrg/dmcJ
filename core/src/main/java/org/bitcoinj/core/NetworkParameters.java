@@ -76,6 +76,8 @@ public abstract class NetworkParameters implements Serializable {
     protected int interval;
     protected int targetTimespan;
     protected byte[] alertSigningKey;
+    protected long liveFeedSwitchTime;
+    protected long powSwitchHeight;
 
     /**
      * See getId(). This may be null for old deserialized wallets. In that case we derive it heuristically
@@ -91,6 +93,7 @@ public abstract class NetworkParameters implements Serializable {
     protected int[] acceptableAddressCodes;
     protected String[] dnsSeeds;
     protected Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
+    private String liveFeedUrl; // TODO(dmc)
 
     protected NetworkParameters() {
         alertSigningKey = ALERT_KEY;
@@ -105,7 +108,7 @@ public abstract class NetworkParameters implements Serializable {
             ByteArrayOutputStream scriptPubKeyBytes = new ByteArrayOutputStream();
             Script.writeBytes(scriptPubKeyBytes, Utils.HEX.decode("04d5097dbafdba541ea1e7000f70190a066fe006fdbc807944d51cb6fe3fdab435c1c342b72fc7b4b9b34e4809e24a9f988b0039f27b62ef7ac298ebd4350c13f2"));
             scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
-            t.addOutput(new TransactionOutput(n, t, ONE_KIBI_COINS, scriptPubKeyBytes.toByteArray()));
+            t.addOutput(new TransactionOutput(n, t, COIN.multiply(65535), scriptPubKeyBytes.toByteArray()));
         } catch (Exception e) {
             // Cannot happen.
             throw new RuntimeException(e);
@@ -334,4 +337,8 @@ public abstract class NetworkParameters implements Serializable {
     public byte[] getAlertSigningKey() {
         return alertSigningKey;
     }
+
+    public long getLiveFeedSwitchTime() { return liveFeedSwitchTime; }
+
+    public String getLiveFeedUrl() { return liveFeedUrl; }
 }
