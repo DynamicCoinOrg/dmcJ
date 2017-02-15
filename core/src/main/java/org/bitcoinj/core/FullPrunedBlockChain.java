@@ -251,8 +251,10 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                     listScriptVerificationResults.add(future);
                 }
             }
-            if (totalFees.compareTo(NetworkParameters.MAX_MONEY) > 0 || block.getBlockInflation(height).add(totalFees).compareTo(coinbaseValue) < 0)
+            if (totalFees.compareTo(NetworkParameters.MAX_MONEY) > 0)
                 throw new VerificationException("Transaction fees out of range");
+            dmcSystem.checkBlockReward(block, height, coinbaseValue, totalFees);
+
             for (Future<VerificationException> future : listScriptVerificationResults) {
                 VerificationException e;
                 try {
@@ -375,9 +377,10 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         listScriptVerificationResults.add(future);
                     }
                 }
-                if (totalFees.compareTo(NetworkParameters.MAX_MONEY) > 0 ||
-                        newBlock.getHeader().getBlockInflation(newBlock.getHeight()).add(totalFees).compareTo(coinbaseValue) < 0)
+                if (totalFees.compareTo(NetworkParameters.MAX_MONEY) > 0)
                     throw new VerificationException("Transaction fees out of range");
+                dmcSystem.checkBlockReward(newBlock.getHeader(), newBlock.getHeight(), coinbaseValue, totalFees);
+
                 txOutChanges = new TransactionOutputChanges(txOutsCreated, txOutsSpent);
                 for (Future<VerificationException> future : listScriptVerificationResults) {
                     VerificationException e;
