@@ -22,6 +22,7 @@ import org.slf4j.*;
 
 import javax.annotation.*;
 import java.io.*;
+import java.math.BigInteger;
 import java.nio.*;
 import java.nio.channels.*;
 import java.util.*;
@@ -144,7 +145,7 @@ public class SPVBlockStore implements BlockStore {
             lock.unlock();
         }
         Block genesis = params.getGenesisBlock().cloneAsHeader();
-        StoredBlock storedGenesis = new StoredBlock(genesis, genesis.getWork(), 0);
+        StoredBlock storedGenesis = new StoredBlock(genesis, genesis.getWork(), 0, params.getGenesisBlock().getReward(), BigInteger.valueOf(params.getGenesisBlock().getReward().getValue()));
         put(storedGenesis);
         setChainHead(storedGenesis);
     }

@@ -693,7 +693,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         }
 
         // Now give the server enough coins to pay the fee
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, new ECKey().toAddress(params)), BigInteger.ONE, 1);
+        Block solvedTestBlock = makeSolvedTestBlock(blockStore, new ECKey().toAddress(params));
+        StoredBlock block = new StoredBlock(solvedTestBlock, BigInteger.ONE, 1, solvedTestBlock.getReward(), BigInteger.valueOf(solvedTestBlock.getReward().getValue()));
         Transaction tx1 = createFakeTx(params, COIN, serverKey.toAddress(params));
         serverWallet.receiveFromBlock(tx1, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
 
@@ -789,7 +790,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
         doubleSpendContract.addOutput(halfCoin, myKey);
         doubleSpendContract = new Transaction(params, doubleSpendContract.bitcoinSerialize());
 
-        StoredBlock block = new StoredBlock(params.getGenesisBlock().createNextBlock(myKey.toAddress(params)), BigInteger.TEN, 1);
+        Block nextBlock = params.getGenesisBlock().createNextBlock(myKey.toAddress(params));
+        StoredBlock block = new StoredBlock(nextBlock, BigInteger.TEN, 1, nextBlock.getReward(), BigInteger.valueOf(params.getGenesisBlock().getReward().add(nextBlock.getReward()).getValue()));
         serverWallet.receiveFromBlock(doubleSpendContract, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
 
         // Now if we try to spend again the server will reject it since it saw a double-spend

@@ -18,6 +18,7 @@ package org.bitcoinj.store;
 
 import org.bitcoinj.core.*;
 
+import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -37,7 +38,8 @@ public class MemoryBlockStore implements BlockStore {
         // Insert the genesis block.
         try {
             Block genesisHeader = params.getGenesisBlock().cloneAsHeader();
-            StoredBlock storedGenesis = new StoredBlock(genesisHeader, genesisHeader.getWork(), 0);
+            Block genesisBlock = params.getGenesisBlock();
+            StoredBlock storedGenesis = new StoredBlock(genesisHeader, genesisHeader.getWork(), 0, genesisBlock.getReward(), BigInteger.valueOf(genesisBlock.getReward().getValue()));
             put(storedGenesis);
             setChainHead(storedGenesis);
         } catch (BlockStoreException e) {

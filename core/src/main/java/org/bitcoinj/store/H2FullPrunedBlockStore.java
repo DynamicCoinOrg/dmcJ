@@ -249,7 +249,8 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         try {
             // Set up the genesis block. When we start out fresh, it is by
             // definition the top of the chain.
-            StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock().cloneAsHeader(), params.getGenesisBlock().getWork(), 0);
+            Block genesisBlock = params.getGenesisBlock();
+            StoredBlock storedGenesisHeader = new StoredBlock(genesisBlock.cloneAsHeader(), genesisBlock.getWork(), 0, genesisBlock.getReward(), BigInteger.valueOf(genesisBlock.getReward().getValue()));
             // The coinbase in the genesis block is not spendable. This is because of how the reference client inits
             // its database - the genesis transaction isn't actually in the db so its spent flags can never be updated.
             List<Transaction> genesisTransactions = Lists.newLinkedList();
@@ -350,16 +351,17 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
     private void putUpdateStoredBlock(StoredBlock storedBlock, boolean wasUndoable) throws SQLException {
         try {
             PreparedStatement s =
-                    conn.get().prepareStatement("INSERT INTO headers(hash, chainWork, height, header, wasUndoable)"
-                            + " VALUES(?, ?, ?, ?, ?)");
+                    conn.get().prepareStatement("INSERT INTO headers(hash, chainWork, chainReward, height, header, wasUndoable)"
+                            + " VALUES(?, ?, ?, ?, ?, ?)");
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
             byte[] hashBytes = new byte[28];
             System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 3, hashBytes, 0, 28);
             s.setBytes(1, hashBytes);
             s.setBytes(2, storedBlock.getChainWork().toByteArray());
-            s.setInt(3, storedBlock.getHeight());
-            s.setBytes(4, storedBlock.getHeader().unsafeBitcoinSerialize());
-            s.setBoolean(5, wasUndoable);
+            s.setBytes(3, storedBlock.getChainReward().toByteArray());
+            s.setInt(4, storedBlock.getHeight());
+            s.setBytes(5, storedBlock.getHeader().unsafeBitcoinSerialize());
+            s.setBoolean(6, wasUndoable);
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {
@@ -371,6 +373,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             PreparedStatement s = conn.get().prepareStatement("UPDATE headers SET wasUndoable=? WHERE hash=?");
             s.setBoolean(1, true);
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
+            // TODO(DMC): ???
             byte[] hashBytes = new byte[28];
             System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 3, hashBytes, 0, 28);
             s.setBytes(2, hashBytes);
@@ -473,8 +476,9 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get().prepareStatement("SELECT chainWork, height, header, wasUndoable FROM headers WHERE hash = ?");
+            s = conn.get().prepareStatement("SELECT chainWork, chainReward, height, header, wasUndoable FROM headers WHERE hash = ?");
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
+            // TODO(DMC): ???
             byte[] hashBytes = new byte[28];
             System.arraycopy(hash.getBytes(), 3, hashBytes, 0, 28);
             s.setBytes(1, hashBytes);
@@ -483,13 +487,14 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
                 return null;
             }
             // Parse it.
-            if (wasUndoableOnly && !results.getBoolean(4))
+            if (wasUndoableOnly && !results.getBoolean(5))
                 return null;
             BigInteger chainWork = new BigInteger(results.getBytes(1));
-            int height = results.getInt(2);
-            Block b = new Block(params, results.getBytes(3));
+            BigInteger chainReward = new BigInteger(results.getBytes(2));
+            int height = results.getInt(3);
+            Block b = new Block(params, results.getBytes(4));
             b.verifyHeader();
-            return new StoredBlock(b, chainWork, height);
+            return new StoredBlock(b, chainWork, height, b.getReward(), chainReward);
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } catch (ProtocolException e) {

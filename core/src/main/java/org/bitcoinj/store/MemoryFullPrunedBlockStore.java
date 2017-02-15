@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.*;
 
 /**
@@ -253,7 +254,8 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         this.fullStoreDepth = fullStoreDepth > 0 ? fullStoreDepth : 1;
         // Insert the genesis block.
         try {
-            StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock().cloneAsHeader(), params.getGenesisBlock().getWork(), 0);
+            Block genesisBlock = params.getGenesisBlock();
+            StoredBlock storedGenesisHeader = new StoredBlock(genesisBlock.cloneAsHeader(), genesisBlock.getWork(), 0, genesisBlock.getReward(), BigInteger.valueOf(genesisBlock.getReward().getValue()));
             // The coinbase in the genesis block is not spendable
             List<Transaction> genesisTransactions = Lists.newLinkedList();
             StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(), genesisTransactions);

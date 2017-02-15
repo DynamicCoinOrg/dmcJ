@@ -34,6 +34,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.DigestInputStream;
@@ -185,7 +186,7 @@ public class CheckpointManager {
             Map.Entry<Long, StoredBlock> entry = checkpoints.floorEntry(time);
             if (entry != null) return entry.getValue();
             Block genesis = params.getGenesisBlock().cloneAsHeader();
-            return new StoredBlock(genesis, genesis.getWork(), 0);
+            return new StoredBlock(genesis, genesis.getWork(), 0, params.getGenesisBlock().getReward(), BigInteger.valueOf(params.getGenesisBlock().getReward().getValue()));
         } catch (VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }

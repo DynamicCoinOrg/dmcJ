@@ -1688,7 +1688,8 @@ public class WalletTest extends TestWithWallet {
         Address notMyAddr = new ECKey().toAddress(params);
 
         // Generate a few outputs to us that are far too small to spend reasonably
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, notMyAddr), BigInteger.ONE, 1);
+        Block solvedTestBlock = makeSolvedTestBlock(blockStore, notMyAddr);
+        StoredBlock block = new StoredBlock(solvedTestBlock, BigInteger.ONE, 1, solvedTestBlock.getReward(), BigInteger.valueOf(solvedTestBlock.getReward().getValue()));
         Transaction tx1 = createFakeTx(params, SATOSHI, myAddress);
         wallet.receiveFromBlock(tx1, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         Transaction tx2 = createFakeTx(params, SATOSHI, myAddress);
@@ -1711,7 +1712,8 @@ public class WalletTest extends TestWithWallet {
         assertEquals(ZERO, wallet.getBalance());
 
         // Add some reasonable-sized outputs
-        block = new StoredBlock(makeSolvedTestBlock(blockStore, notMyAddr), BigInteger.ONE, 1);
+        solvedTestBlock = makeSolvedTestBlock(blockStore, notMyAddr);
+        block = new StoredBlock(solvedTestBlock, BigInteger.ONE, 1, solvedTestBlock.getReward(), BigInteger.valueOf(solvedTestBlock.getReward().getValue()));
         Transaction tx4 = createFakeTx(params, Coin.COIN, myAddress);
         wallet.receiveFromBlock(tx4, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
 
@@ -1832,11 +1834,13 @@ public class WalletTest extends TestWithWallet {
 
         // Now test coin selection properly selects coin*depth
         for (int i = 0; i < 100; i++) {
-            block = new StoredBlock(makeSolvedTestBlock(blockStore, notMyAddr), BigInteger.ONE, 1);
+            solvedTestBlock = makeSolvedTestBlock(blockStore, notMyAddr);
+            block = new StoredBlock(solvedTestBlock, BigInteger.ONE, 1, solvedTestBlock.getReward(), BigInteger.valueOf(solvedTestBlock.getReward().getValue()));
             wallet.notifyNewBestBlock(block);
         }
 
-        block = new StoredBlock(makeSolvedTestBlock(blockStore, notMyAddr), BigInteger.ONE, 1);
+        solvedTestBlock = makeSolvedTestBlock(blockStore, notMyAddr);
+        block = new StoredBlock(solvedTestBlock, BigInteger.ONE, 1, solvedTestBlock.getReward(), BigInteger.valueOf(solvedTestBlock.getReward().getValue()));
         Transaction tx6 = createFakeTx(params, COIN, myAddress);
         wallet.receiveFromBlock(tx6, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 1);
         assertTrue(tx5.getOutput(0).isMine(wallet) && tx5.getOutput(0).isAvailableForSpending() && tx5.getConfidence().getDepthInBlocks() == 100);
@@ -1853,7 +1857,8 @@ public class WalletTest extends TestWithWallet {
         Transaction spend13 = wallet.createSend(notMyAddr, CENT);
         assertTrue(spend13.getOutputs().size() == 1 && spend13.getOutput(0).getValue().equals(CENT));
 
-        block = new StoredBlock(makeSolvedTestBlock(blockStore, notMyAddr), BigInteger.ONE, 1);
+        solvedTestBlock = makeSolvedTestBlock(blockStore, notMyAddr);
+        block = new StoredBlock(solvedTestBlock, BigInteger.ONE, 1, solvedTestBlock.getReward(), BigInteger.valueOf(solvedTestBlock.getReward().getValue()));
         wallet.notifyNewBestBlock(block);
         assertTrue(tx5.getOutput(0).isMine(wallet) && tx5.getOutput(0).isAvailableForSpending() && tx5.getConfidence().getDepthInBlocks() == 102);
         assertTrue(tx6.getOutput(0).isMine(wallet) && tx6.getOutput(0).isAvailableForSpending() && tx6.getConfidence().getDepthInBlocks() == 2);
@@ -2082,7 +2087,8 @@ public class WalletTest extends TestWithWallet {
         Address notMyAddr = new ECKey().toAddress(params);
 
         // Generate a ton of small outputs
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, notMyAddr), BigInteger.ONE, 1);
+        Block solvedTestBlock = makeSolvedTestBlock(blockStore, notMyAddr);
+        StoredBlock block = new StoredBlock(solvedTestBlock, BigInteger.ONE, 1, solvedTestBlock.getReward(), BigInteger.valueOf(solvedTestBlock.getReward().getValue()));
         int i = 0;
         Coin tenThousand = Coin.valueOf(10000);
         while (i <= 100) {
@@ -2165,7 +2171,8 @@ public class WalletTest extends TestWithWallet {
         Address notMyAddr = new ECKey().toAddress(params);
 
         // Generate a ton of small outputs
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, notMyAddr), BigInteger.ONE, 1);
+        Block solvedTestBlock = makeSolvedTestBlock(blockStore, notMyAddr);
+        StoredBlock block = new StoredBlock(solvedTestBlock, BigInteger.ONE, 1, solvedTestBlock.getReward(), BigInteger.valueOf(solvedTestBlock.getReward().getValue()));
         int i = 0;
         while (i <= CENT.divide(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(10))) {
             Transaction tx = createFakeTxWithChangeAddress(params, Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(10), myAddress, notMyAddr);
@@ -2186,7 +2193,8 @@ public class WalletTest extends TestWithWallet {
         Address notMyAddr = new ECKey().toAddress(params);
 
         // Prepare wallet to spend
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, notMyAddr), BigInteger.ONE, 1);
+        Block solvedTestBlock = makeSolvedTestBlock(blockStore, notMyAddr);
+        StoredBlock block = new StoredBlock(solvedTestBlock, BigInteger.ONE, 1, solvedTestBlock.getReward(), BigInteger.valueOf(solvedTestBlock.getReward().getValue()));
         Transaction tx = createFakeTx(params, COIN, myAddress);
         wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
 
@@ -2243,7 +2251,8 @@ public class WalletTest extends TestWithWallet {
         Address notMyAddr = new ECKey().toAddress(params);
 
         // Generate a ton of small outputs
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, notMyAddr), BigInteger.ONE, 1);
+        Block solvedTestBlock = makeSolvedTestBlock(blockStore, notMyAddr);
+        StoredBlock block = new StoredBlock(solvedTestBlock, BigInteger.ONE, 1, solvedTestBlock.getReward(), BigInteger.valueOf(solvedTestBlock.getReward().getValue()));
         Transaction tx = createFakeTx(params, COIN, myAddress);
         wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         Transaction tx2 = createFakeTx(params, CENT, myAddress);
@@ -2291,7 +2300,8 @@ public class WalletTest extends TestWithWallet {
         Address notMyAddr = new ECKey().toAddress(params);
 
         // Generate a few outputs to us
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, notMyAddr), BigInteger.ONE, 1);
+        Block solvedTestBlock = makeSolvedTestBlock(blockStore, notMyAddr);
+        StoredBlock block = new StoredBlock(solvedTestBlock, BigInteger.ONE, 1, solvedTestBlock.getReward(), BigInteger.valueOf(solvedTestBlock.getReward().getValue()));
         Transaction tx1 = createFakeTx(params, COIN, myAddress);
         wallet.receiveFromBlock(tx1, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         Transaction tx2 = createFakeTx(params, COIN, myAddress); assertTrue(!tx1.getHash().equals(tx2.getHash()));
@@ -2377,7 +2387,8 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void testEmptyRandomWallet() throws Exception {
         // Add a random set of outputs
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, new ECKey().toAddress(params)), BigInteger.ONE, 1);
+        Block solvedTestBlock = makeSolvedTestBlock(blockStore, new ECKey().toAddress(params));
+        StoredBlock block = new StoredBlock(solvedTestBlock, BigInteger.ONE, 1, solvedTestBlock.getReward(), BigInteger.valueOf(solvedTestBlock.getReward().getValue()));
         Random rng = new Random();
         for (int i = 0; i < rng.nextInt(100) + 1; i++) {
             Transaction tx = createFakeTx(params, Coin.valueOf(rng.nextInt((int) COIN.value)), myAddress);
@@ -2393,7 +2404,8 @@ public class WalletTest extends TestWithWallet {
     public void testEmptyWallet() throws Exception {
         Address outputKey = new ECKey().toAddress(params);
         // Add exactly 0.01
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, outputKey), BigInteger.ONE, 1);
+        Block solvedTestBlock = makeSolvedTestBlock(blockStore, outputKey);
+        StoredBlock block = new StoredBlock(solvedTestBlock, BigInteger.ONE, 1, solvedTestBlock.getReward(), BigInteger.valueOf(solvedTestBlock.getReward().getValue()));
         Transaction tx = createFakeTx(params, CENT, myAddress);
         wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         SendRequest request = SendRequest.emptyWallet(outputKey);
@@ -2405,7 +2417,8 @@ public class WalletTest extends TestWithWallet {
 
         // Add 1 confirmed cent and 1 unconfirmed cent. Verify only one cent is emptied because of the coin selection
         // policies that are in use by default.
-        block = new StoredBlock(makeSolvedTestBlock(blockStore, outputKey), BigInteger.ONE, 1);
+        solvedTestBlock = makeSolvedTestBlock(blockStore, outputKey);
+        block = new StoredBlock(solvedTestBlock, BigInteger.ONE, 1, solvedTestBlock.getReward(), BigInteger.valueOf(solvedTestBlock.getReward().getValue()));
         tx = createFakeTx(params, CENT, myAddress);
         wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         tx = createFakeTx(params, CENT, myAddress);
@@ -2418,7 +2431,8 @@ public class WalletTest extends TestWithWallet {
         assertEquals(CENT, request.tx.getOutput(0).getValue());
 
         // Add just under 0.01
-        StoredBlock block2 = new StoredBlock(block.getHeader().createNextBlock(outputKey), BigInteger.ONE, 2);
+        Block solvedTestBlock2 = block.getHeader().createNextBlock(outputKey);
+        StoredBlock block2 = new StoredBlock(solvedTestBlock2, BigInteger.ONE, 2, solvedTestBlock2.getReward(), block.getChainReward().add(BigInteger.valueOf(solvedTestBlock2.getReward().getValue())));
         tx = createFakeTx(params, CENT.subtract(SATOSHI), myAddress);
         wallet.receiveFromBlock(tx, block2, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         request = SendRequest.emptyWallet(outputKey);
@@ -2429,7 +2443,8 @@ public class WalletTest extends TestWithWallet {
         assertEquals(CENT.subtract(SATOSHI).subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE), request.tx.getOutput(0).getValue());
 
         // Add an unsendable value
-        StoredBlock block3 = new StoredBlock(block2.getHeader().createNextBlock(outputKey), BigInteger.ONE, 3);
+        Block solvedTestBlock3 = block2.getHeader().createNextBlock(outputKey);
+        StoredBlock block3 = new StoredBlock(solvedTestBlock3, BigInteger.ONE, 3, solvedTestBlock3.getReward(), block2.getChainReward().add(BigInteger.valueOf(solvedTestBlock3.getReward().getValue())));
         Coin outputValue = Transaction.MIN_NONDUST_OUTPUT.add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE).subtract(SATOSHI);
         tx = createFakeTx(params, outputValue, myAddress);
         wallet.receiveFromBlock(tx, block3, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);

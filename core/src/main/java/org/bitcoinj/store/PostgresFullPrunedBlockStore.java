@@ -67,6 +67,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
     private static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (" +
             "    hash bytea NOT NULL," +
             "    chainwork bytea NOT NULL," +
+            "    chainreward bytea NOT NULL," +
             "    height integer NOT NULL," +
             "    header bytea NOT NULL," +
             "    wasundoable boolean NOT NULL" +
@@ -323,7 +324,8 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         try {
             // Set up the genesis block. When we start out fresh, it is by
             // definition the top of the chain.
-            StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock().cloneAsHeader(), params.getGenesisBlock().getWork(), 0);
+            Block genesisBlock = params.getGenesisBlock();
+            StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock().cloneAsHeader(), params.getGenesisBlock().getWork(), 0, genesisBlock.getReward(), BigInteger.valueOf(genesisBlock.getReward().getValue()));
             // The coinbase in the genesis block is not spendable. This is because of how the reference client inits
             // its database - the genesis transaction isn't actually in the db so its spent flags can never be updated.
             List<Transaction> genesisTransactions = Lists.newLinkedList();
@@ -370,12 +372,14 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         System.out.printf("Settings size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
 
         totalSize += size; size = 0; count = 0;
-        rs = s.executeQuery("SELECT chainWork, header FROM headers");
+        rs = s.executeQuery("SELECT chainWork, chainReward, header FROM headers");
         while (rs.next()) {
             size += 28; // hash
             size += rs.getBytes(1).length;
-            size += 4; // height
+            size += 28; // chainreward
             size += rs.getBytes(2).length;
+            size += 4; // height
+            size += rs.getBytes(3).length;
             count++;
         }
         rs.close();
@@ -424,16 +428,18 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
     private void putUpdateStoredBlock(StoredBlock storedBlock, boolean wasUndoable) throws SQLException {
         try {
             PreparedStatement s =
-                    conn.get().prepareStatement("INSERT INTO headers(hash, chainWork, height, header, wasUndoable)"
-                            + " VALUES(?, ?, ?, ?, ?)");
+                    conn.get().prepareStatement("INSERT INTO headers(hash, chainWork, chainReward, height, header, wasUndoable)"
+                            + " VALUES(?, ?, ?, ?, ?, ?)");
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
+            // TODO(DMC): ???
             byte[] hashBytes = new byte[28];
             System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 3, hashBytes, 0, 28);
             s.setBytes(1, hashBytes);
             s.setBytes(2, storedBlock.getChainWork().toByteArray());
-            s.setInt(3, storedBlock.getHeight());
-            s.setBytes(4, storedBlock.getHeader().unsafeBitcoinSerialize());
-            s.setBoolean(5, wasUndoable);
+            s.setBytes(3, storedBlock.getChainReward().toByteArray());
+            s.setInt(4, storedBlock.getHeight());
+            s.setBytes(5, storedBlock.getHeader().unsafeBitcoinSerialize());
+            s.setBoolean(6, wasUndoable);
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {
@@ -569,8 +575,9 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
         PreparedStatement s = null;
         try {
             s = conn.get()
-                    .prepareStatement("SELECT chainWork, height, header, wasUndoable FROM headers WHERE hash = ?");
+                    .prepareStatement("SELECT chainWork, chainReward, height, header, wasUndoable FROM headers WHERE hash = ?");
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
+            // TODO(DMC): ???
             byte[] hashBytes = new byte[28];
             System.arraycopy(hash.getBytes(), 3, hashBytes, 0, 28);
             s.setBytes(1, hashBytes);
@@ -580,14 +587,15 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
             }
             // Parse it.
 
-            if (wasUndoableOnly && !results.getBoolean(4))
+            if (wasUndoableOnly && !results.getBoolean(5))
                 return null;
 
             BigInteger chainWork = new BigInteger(results.getBytes(1));
-            int height = results.getInt(2);
-            Block b = new Block(params, results.getBytes(3));
+            BigInteger chainReward = new BigInteger(results.getBytes(2));
+            int height = results.getInt(3);
+            Block b = new Block(params, results.getBytes(4));
             b.verifyHeader();
-            StoredBlock stored = new StoredBlock(b, chainWork, height);
+            StoredBlock stored = new StoredBlock(b, chainWork, height, b.getReward(), chainReward);
             return stored;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
