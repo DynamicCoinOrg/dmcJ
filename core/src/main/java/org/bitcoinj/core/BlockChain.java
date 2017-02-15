@@ -44,7 +44,7 @@ public class BlockChain extends AbstractBlockChain {
      * {@link org.bitcoinj.store.MemoryBlockStore} if you want to hold all headers in RAM and don't care about
      * disk serialization (this is rare).</p>
      */
-    public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
+    public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) throws BlockStoreException, DmcSystemException {
         this(params, new ArrayList<BlockChainListener>(), blockStore);
         if (wallet != null)
             addWallet(wallet);
@@ -54,7 +54,7 @@ public class BlockChain extends AbstractBlockChain {
      * Constructs a BlockChain that has no wallet at all. This is helpful when you don't actually care about sending
      * and receiving coins but rather, just want to explore the network data structures.
      */
-    public BlockChain(NetworkParameters params, BlockStore blockStore) throws BlockStoreException {
+    public BlockChain(NetworkParameters params, BlockStore blockStore) throws BlockStoreException, DmcSystemException {
         this(params, new ArrayList<BlockChainListener>(), blockStore);
     }
 
@@ -62,7 +62,7 @@ public class BlockChain extends AbstractBlockChain {
      * Constructs a BlockChain connected to the given list of listeners and a store.
      */
     public BlockChain(NetworkParameters params, List<BlockChainListener> wallets,
-                      BlockStore blockStore) throws BlockStoreException {
+                      BlockStore blockStore) throws BlockStoreException, DmcSystemException {
         super(params, wallets, blockStore);
         this.blockStore = blockStore;
     }

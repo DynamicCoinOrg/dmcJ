@@ -56,7 +56,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      * Constructs a BlockChain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
      * one from scratch, or you can deserialize a saved wallet from disk using {@link Wallet#loadFromFile(java.io.File)}
      */
-    public FullPrunedBlockChain(NetworkParameters params, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
+    public FullPrunedBlockChain(NetworkParameters params, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException, DmcSystemException {
         this(params, new ArrayList<BlockChainListener>(), blockStore);
         if (wallet != null)
             addWallet(wallet);
@@ -66,7 +66,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      * Constructs a BlockChain that has no wallet at all. This is helpful when you don't actually care about sending
      * and receiving coins but rather, just want to explore the network data structures.
      */
-    public FullPrunedBlockChain(NetworkParameters params, FullPrunedBlockStore blockStore) throws BlockStoreException {
+    public FullPrunedBlockChain(NetworkParameters params, FullPrunedBlockStore blockStore) throws BlockStoreException, DmcSystemException {
         this(params, new ArrayList<BlockChainListener>(), blockStore);
     }
 
@@ -74,7 +74,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      * Constructs a BlockChain connected to the given list of wallets and a store.
      */
     public FullPrunedBlockChain(NetworkParameters params, List<BlockChainListener> listeners,
-                                FullPrunedBlockStore blockStore) throws BlockStoreException {
+                                FullPrunedBlockStore blockStore) throws BlockStoreException, DmcSystemException {
         super(params, listeners, blockStore);
         this.blockStore = blockStore;
         // Ignore upgrading for now

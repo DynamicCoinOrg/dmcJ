@@ -434,7 +434,7 @@ public class WalletTool {
         wallet.addFollowingAccountKeys(keys.build());
     }
 
-    private static void rotate() throws BlockStoreException {
+    private static void rotate() throws BlockStoreException, DmcSystemException {
         setup();
         peers.startAsync();
         peers.awaitRunning();
@@ -586,6 +586,8 @@ public class WalletTool {
             throw new RuntimeException(e);
         } catch (KeyCrypterException e) {
             throw new RuntimeException(e);
+        } catch (DmcSystemException e) {
+            throw new RuntimeException(e);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } catch (ExecutionException e) {
@@ -706,6 +708,9 @@ public class WalletTool {
         } catch (ExecutionException e) {
             System.err.println("Failed to send payment " + e.getMessage());
             System.exit(1);
+        } catch (DmcSystemException e) {
+            System.err.println("Failed to send payment " + e.getMessage());
+            System.exit(1);
         } catch (IOException e) {
             System.err.println("Invalid payment " + e.getMessage());
             System.exit(1);
@@ -718,7 +723,7 @@ public class WalletTool {
         }
     }
 
-    private static void wait(WaitForEnum waitFor) throws BlockStoreException {
+    private static void wait(WaitForEnum waitFor) throws BlockStoreException, DmcSystemException {
         final CountDownLatch latch = new CountDownLatch(1);
         setup();
         switch (waitFor) {
@@ -800,7 +805,7 @@ public class WalletTool {
     }
 
     // Sets up all objects needed for network communication but does not bring up the peers.
-    private static void setup() throws BlockStoreException {
+    private static void setup() throws BlockStoreException, DmcSystemException {
         if (store != null) return;  // Already done.
         // Will create a fresh chain if one doesn't exist or there is an issue with this one.
         if (!chainFileName.exists() && wallet.getTransactions(true).size() > 0) {
@@ -872,6 +877,9 @@ public class WalletTool {
             }
         } catch (BlockStoreException e) {
             System.err.println("Error reading block chain file " + chainFileName + ": " + e.getMessage());
+            e.printStackTrace();
+        } catch (DmcSystemException e) {
+            System.err.println("Error instantiating DmcSystem: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -1072,7 +1080,7 @@ public class WalletTool {
         wallet.removeKey(key);
     }
 
-    private static void dumpWallet() throws BlockStoreException {
+    private static void dumpWallet() throws BlockStoreException, DmcSystemException {
         // Setup to get the chain height so we can estimate lock times, but don't wipe the transactions if it's not
         // there just for the dump case.
         if (chainFileName.exists())

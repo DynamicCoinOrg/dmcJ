@@ -11,7 +11,7 @@ import java.io.File;
 
 /** Very thin wrapper around {@link org.bitcoinj.utils.BlockFileLoader} */
 public class BlockImporter {
-    public static void main(String[] args) throws BlockStoreException, VerificationException, PrunedException {
+    public static void main(String[] args) throws BlockStoreException, VerificationException, PrunedException, DmcSystemException {
         System.out.println("USAGE: BlockImporter (prod|test) (H2|Disk|MemFull|Mem|SPV) [blockStore]");
         System.out.println("       blockStore is required unless type is Mem or MemFull");
         System.out.println("       eg BlockImporter prod H2 /home/user/bitcoinj.h2store");

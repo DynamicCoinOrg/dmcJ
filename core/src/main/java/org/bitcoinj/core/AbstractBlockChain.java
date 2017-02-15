@@ -85,6 +85,8 @@ public abstract class AbstractBlockChain {
     private static final Logger log = LoggerFactory.getLogger(AbstractBlockChain.class);
     protected final ReentrantLock lock = Threading.lock("blockchain");
 
+    protected final DmcSystem dmcSystem;
+
     /** Keeps a map of block hashes to StoredBlocks. */
     private final BlockStore blockStore;
 
@@ -143,7 +145,8 @@ public abstract class AbstractBlockChain {
      * Constructs a BlockChain connected to the given list of listeners (eg, wallets) and a store.
      */
     public AbstractBlockChain(NetworkParameters params, List<BlockChainListener> listeners,
-                              BlockStore blockStore) throws BlockStoreException {
+                              BlockStore blockStore) throws BlockStoreException, DmcSystemException {
+        this.dmcSystem = new DmcSystem(params.getLiveFeedUrl(), this, params);
         this.blockStore = blockStore;
         chainHead = blockStore.getChainHead();
         log.info("chain head is at height {}:\n{}", chainHead.getHeight(), chainHead.getHeader());

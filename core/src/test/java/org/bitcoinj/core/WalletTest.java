@@ -100,11 +100,11 @@ public class WalletTest extends TestWithWallet {
         super.tearDown();
     }
 
-    private void createMarriedWallet(int threshold, int numKeys) throws BlockStoreException {
+    private void createMarriedWallet(int threshold, int numKeys) throws BlockStoreException, DmcSystemException {
         createMarriedWallet(threshold, numKeys, true);
     }
 
-    private void createMarriedWallet(int threshold, int numKeys, boolean addSigners) throws BlockStoreException {
+    private void createMarriedWallet(int threshold, int numKeys, boolean addSigners) throws BlockStoreException, DmcSystemException {
         wallet = new Wallet(params);
         blockStore = new MemoryBlockStore(params);
         chain = new BlockChain(params, wallet, blockStore);
