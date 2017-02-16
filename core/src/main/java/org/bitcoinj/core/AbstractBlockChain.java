@@ -871,6 +871,17 @@ public abstract class AbstractBlockChain {
             return;
         }
 
+        // reset difficulty to min (maxtarget) when there're now blocks for more than TARGET_SPACING * 2
+        final long timeDelta = nextBlock.getTimeSeconds() - prev.getTimeSeconds();
+        if (timeDelta >= 0 && timeDelta > NetworkParameters.TARGET_SPACING * 2) {
+            if (proofOfWorkLimit.compareTo(nextBlock.getDifficultyTargetAsInteger()) < 0)
+                throw new VerificationException("Unexpected change in difficulty for distant blocks at height" + storedPrev.getHeight() +
+                        ": " + Long.toHexString(nextBlock.getDifficultyTarget()) + ", but must be >=" +
+                        Long.toHexString(Utils.encodeCompactBits(proofOfWorkLimit)));
+            else
+                return;
+        }
+
         int diffWindow = params.getInterval();
         int diffTimestampOutlierCutoff = 60;
 
