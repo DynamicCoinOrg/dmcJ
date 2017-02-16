@@ -48,6 +48,7 @@ public class MainNetParams extends NetworkParameters {
         spendableCoinbaseDepth = 100;
         liveFeedSwitchTime = 1469916000;
         powSwitchHeight = 2500000;
+        liveFeedUrl = "http://dynamiccoin.org/";
 
         // A script containing the difficulty bits and the following message:
         //

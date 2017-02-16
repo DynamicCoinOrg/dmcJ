@@ -78,6 +78,7 @@ public abstract class NetworkParameters implements Serializable {
     protected byte[] alertSigningKey;
     protected long liveFeedSwitchTime;
     protected long powSwitchHeight;
+    protected String liveFeedUrl;
 
     /**
      * See getId(). This may be null for old deserialized wallets. In that case we derive it heuristically
@@ -93,7 +94,6 @@ public abstract class NetworkParameters implements Serializable {
     protected int[] acceptableAddressCodes;
     protected String[] dnsSeeds;
     protected Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
-    private String liveFeedUrl; // TODO(dmc)
 
     protected NetworkParameters() {
         alertSigningKey = ALERT_KEY;
