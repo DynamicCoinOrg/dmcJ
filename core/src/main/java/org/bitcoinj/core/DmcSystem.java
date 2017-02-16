@@ -104,18 +104,17 @@ public class DmcSystem {
             ));
         } else {
 
-            // if (MainNet) {
-            // TODO(DMC): MainNet here
-            if (height >= 0 && height <= mainChainGenesisRewardZone) {
-                expectedReward = genesisReward;
-            } else if (height > mainChainGenesisRewardZone && height < mainChainDecreasingRewardZone) {
-                expectedReward = Coin.COIN.multiply(mainChainDecreasingRewardZone - height);
-            }
+            if (networkParameters.getId().equals(NetworkParameters.ID_MAINNET)) {
+                if (height >= 0 && height <= mainChainGenesisRewardZone) {
+                    expectedReward = genesisReward;
+                } else if (height > mainChainGenesisRewardZone && height < mainChainDecreasingRewardZone) {
+                    expectedReward = Coin.COIN.multiply(mainChainDecreasingRewardZone - height);
+                }
 
-            // } else {
-            // TODO(DMC): TestNet
-//             expectedReward = Coin.COIN.multiply(1024);
-            // }
+             } else {
+                // TestNet
+                expectedReward = Coin.COIN.multiply(1024);
+             }
         }
 
         return expectedReward;
