@@ -19,21 +19,21 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <groupId>org.bitcoinj</groupId>
-        <artifactId>bitcoinj-parent</artifactId>
+        <groupId>org.dmcj</groupId>
+        <artifactId>dmcj-parent</artifactId>
         <version>0.12.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>bitcoinj-examples</artifactId>
+    <artifactId>dmcj-examples</artifactId>
 
-    <name>bitcoinj Examples</name>
-    <description>A collection of examples using the bitcoinj library</description>
+    <name>dmcj Examples</name>
+    <description>A collection of examples using the dmcj library</description>
 
     <dependencies>
         <dependency>
-            <groupId>org.bitcoinj</groupId>
-            <artifactId>bitcoinj-core</artifactId>
+            <groupId>org.dmcj</groupId>
+            <artifactId>dmcj-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>

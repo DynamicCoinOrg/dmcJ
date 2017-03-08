@@ -20,19 +20,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.bitcoinj</groupId>
-        <artifactId>bitcoinj-parent</artifactId>
+        <groupId>org.dmcj</groupId>
+        <artifactId>dmcj-parent</artifactId>
         <version>0.12.3</version>
     </parent>
 
-    <artifactId>bitcoinj-core</artifactId>
+    <artifactId>dmcj-core</artifactId>
 
-    <name>bitcoinj</name>
-    <description>A Java Bitcoin library</description>
+    <name>dmcj</name>
+    <description>A Java DynamicCoin library</description>
 
     <packaging>jar</packaging>
 
-    <url>https://bitcoinj.github.io</url>
+    <url>https://dynamiccoin.org/</url>
 
     <licenses>
         <license>
@@ -45,8 +45,8 @@
     <!-- Dummy block to make Maven Central happy: authors list is in AUTHORS -->
     <developers>
         <developer>
-            <name>The bitcoinj team</name>
-            <email>bitcoinj@googlegroups.com</email>
+            <name>The dmcj team</name>
+            <email>webmaster@dynamiccoin.org</email>
         </developer>
     </developers>
 
@@ -165,7 +165,7 @@
                                     <!-- Format is URN of groupId:artifactId:version:type:classifier:scope:hash -->
                                     <!-- classifier is "null" if not present -->
                                     <urns>
-                                        <urn>org.bitcoinj:orchid:1.0:jar:null:compile:bd98285f39f88875bb91bde940d6ca2d020edaa4</urn>
+                                        <urn>org.dmcj:orchid:1.0:jar:null:compile:7750aedc3a8840d4e3ee7764b8c841037a44bca7</urn>
                                         <urn>cglib:cglib-nodep:2.2:jar:null:test:59afed7ab65e7ec6585d5bc60556c3cbd203532b</urn>
                                         <urn>com.google.code.findbugs:jsr305:2.0.1:jar:null:compile:516c03b21d50a644d538de0f0369c620989cd8f0</urn>
                                         <urn>com.google.guava:guava:16.0.1:jar:null:compile:5fa98cd1a63c99a44dd8d3b77e4762b066a5d0c5</urn>
@@ -278,8 +278,8 @@
                             <artifactItems>
                                 <artifactItem>
                                     <outputDirectory>target/test-classes/</outputDirectory>
-                                    <groupId>org.bitcoinj</groupId>
-                                    <artifactId>bitcoinj-core</artifactId>
+                                    <groupId>org.dmcj</groupId>
+                                    <artifactId>dmcj-core</artifactId>
                                     <version>${project.version}</version>
                                 </artifactItem>
                             </artifactItems>
@@ -312,7 +312,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>org.bitcoinj.core.BitcoindComparisonTool</mainClass>
+                                    <mainClass>org.dmcj.core.BitcoindComparisonTool</mainClass>
                                     <addClasspath>false</addClasspath>
                                 </manifest>
                             </archive>
@@ -342,7 +342,7 @@
             <version>3.0</version>
             <scope>test</scope>
         </dependency>
-        <!-- bitcoinj consumers are expected to provide their own SLF4J adapters
+        <!-- dmcj consumers are expected to provide their own SLF4J adapters
              such as logback, slf4j-log4j12, slf4j-jcl and so on
              see http://www.slf4j.org/faq.html -->
         <dependency>
@@ -408,7 +408,7 @@
         </dependency>
         -->
         <dependency>
-            <groupId>org.bitcoinj</groupId>
+            <groupId>org.dmcj</groupId>
             <artifactId>orchid</artifactId>
             <version>1.0</version>
         </dependency>
