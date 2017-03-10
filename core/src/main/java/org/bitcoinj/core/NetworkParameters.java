@@ -18,6 +18,7 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.math.LongMath;
 import org.bitcoinj.params.*;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptOpCodes;
@@ -131,7 +132,7 @@ public abstract class NetworkParameters implements Serializable {
     /**
      * The maximum number of coins to be generated
      */
-    public static final long MAX_COINS = Long.MAX_VALUE / COIN.value;
+    public static final long MAX_COINS = Long.MAX_VALUE / LongMath.pow(10, 8);
 
     /**
      * The maximum money to be generated
