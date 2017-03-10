@@ -23,6 +23,7 @@ import org.bitcoinj.core.Utils;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.bitcoinj.core.Block.BLOCK_VERSION_0_3;
+import static org.bitcoinj.core.Coin.COIN;
 
 /**
  * Parameters for the main production network on which people trade goods and services.
@@ -40,12 +41,9 @@ public class MainNetParams extends NetworkParameters {
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         port = 7333;
         packetMagic = 0xf9beb4e0L;
-        genesisBlock.setVersion(BLOCK_VERSION_0_3);
-        genesisBlock.setDifficultyTarget(0x1e00ffffL);
-        genesisBlock.setTime(1438828878L);
-        genesisBlock.setNonce(20475014);
         id = ID_MAINNET;
         spendableCoinbaseDepth = 100;
+        genesisReward = COIN.multiply(65535);
         liveFeedSwitchTime = 1469916000;
         powSwitchHeight = 2500000;
         liveFeedUrl = "http://dynamiccoin.org/";
@@ -53,9 +51,15 @@ public class MainNetParams extends NetworkParameters {
         // A script containing the difficulty bits and the following message:
         //
         //   "DynamicCoin genesis / MainNet"
-        CharSequence inputScriptHex = "04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73";
+        CharSequence inputScriptHex = "0004ffff001e01041d44796e616d6963436f696e2067656e65736973202f204d61696e4e6574";
         genesisBlock = createGenesis(this, inputScriptHex);
+        genesisBlock.setVersion(BLOCK_VERSION_0_3);
+        genesisBlock.setDifficultyTarget(0x1e00ffffL);
+        genesisBlock.setTime(1438828878L);
+        genesisBlock.setNonce(20475014);
         String genesisHash = genesisBlock.getHashAsString();
+
+        checkState(genesisBlock.getMerkleRoot().toString().equals("d3cdfb0999833b2a7f146b1f269512b2c87ba4c54cad40fabbe1cfaf77da9e3a"));
         checkState(genesisHash.equals("000000152106c2bd4678859ad548da538e2ca0a3ea15dc7c44b0c8bdd8eb5060"),
                    genesisHash);
 

@@ -95,6 +95,7 @@ public abstract class NetworkParameters implements Serializable {
     protected int[] acceptableAddressCodes;
     protected String[] dnsSeeds;
     protected Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
+    protected Coin genesisReward;
 
     protected NetworkParameters() {
         alertSigningKey = ALERT_KEY;
@@ -109,7 +110,7 @@ public abstract class NetworkParameters implements Serializable {
             ByteArrayOutputStream scriptPubKeyBytes = new ByteArrayOutputStream();
             Script.writeBytes(scriptPubKeyBytes, Utils.HEX.decode("04d5097dbafdba541ea1e7000f70190a066fe006fdbc807944d51cb6fe3fdab435c1c342b72fc7b4b9b34e4809e24a9f988b0039f27b62ef7ac298ebd4350c13f2"));
             scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
-            t.addOutput(new TransactionOutput(n, t, COIN.multiply(65535), scriptPubKeyBytes.toByteArray()));
+            t.addOutput(new TransactionOutput(n, t, n.genesisReward, scriptPubKeyBytes.toByteArray()));
         } catch (Exception e) {
             // Cannot happen.
             throw new RuntimeException(e);

@@ -23,6 +23,8 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Utils;
 
 import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.core.Block.BLOCK_VERSION_0_3;
+import static org.bitcoinj.core.Coin.COIN;
 
 /**
  * Parameters for the testnet, a separate public instance of Bitcoin that has relaxed rules suitable for development
@@ -41,21 +43,25 @@ public class TestNet3Params extends NetworkParameters {
         p2shHeader = 196;
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         dumpedPrivateKeyHeader = 239;
-        genesisBlock.setTime(1429025142L);
-        genesisBlock.setDifficultyTarget(0x1e00ffffL);
-        genesisBlock.setNonce(6195114);
         spendableCoinbaseDepth = 100;
+        genesisReward = COIN.multiply(1024);
 
         // A script containing the difficulty bits and the following message:
         //   "DynamicCoin genesis / TestNet"
-        CharSequence inputScriptHex = "04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73";
+        CharSequence inputScriptHex = "0004ffff001e01041d44796e616d6963436f696e2067656e65736973202f20546573744e6574";
         genesisBlock = createGenesis(this, inputScriptHex);
+        genesisBlock.setVersion(BLOCK_VERSION_0_3);
+        genesisBlock.setTime(1436316222L);
+        genesisBlock.setDifficultyTarget(0x1e00ffffL);
+        genesisBlock.setNonce(42228550);
         String genesisHash = genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("000000c71f7f1f6bb21f4b834b3cdb22bf7bc289b093ad2136b0c2b5f9d3bc80"));
+
+        checkState(genesisBlock.getMerkleRoot().toString().equals("5cf528874737db2abdcfc5be9093b172db4820672c1215e30142dbf1710b8b59"));
+        checkState(genesisHash.equals("0000008946caf55a2d30cde53852cf23c82ead9116b2af84b896ae79b3e40282"));
 
         alertSigningKey = Utils.HEX.decode("04302390343f91cc401d56d68b123028bf52e5fca1939df127f63c6467cdf9c8e2c14b61104cf817d0b780da337893ecc4aaff1309e536162dabbdb45200ca2b0a");
 
-        checkpoints.put(0, new Sha256Hash("000000c71f7f1f6bb21f4b834b3cdb22bf7bc289b093ad2136b0c2b5f9d3bc80"));
+        checkpoints.put(0, new Sha256Hash("0000008946caf55a2d30cde53852cf23c82ead9116b2af84b896ae79b3e40282"));
 
         dnsSeeds = new String[] {
                 "test.seeds.dynamiccoin.org"

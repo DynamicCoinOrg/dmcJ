@@ -22,6 +22,8 @@ import org.bitcoinj.core.NetworkParameters;
 
 import java.math.BigInteger;
 
+import static org.bitcoinj.core.Coin.COIN;
+
 /**
  * Network parameters used by the bitcoinj unit tests (and potentially your own). This lets you solve a block using
  * {@link org.bitcoinj.core.Block#solve()} by setting difficulty to the easiest possible.
@@ -35,6 +37,10 @@ public class UnitTestParams extends NetworkParameters {
         p2shHeader = 196;
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         maxTarget = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+
+        genesisReward = COIN.multiply(1);
+        CharSequence inputScriptHex = "0004ffff001e01041d44796e616d6963436f696e2067656e65736973202f20546573744e6574";
+        genesisBlock = createGenesis(this, inputScriptHex);
         genesisBlock.setTime(System.currentTimeMillis() / 1000);
         genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
         genesisBlock.solve();
