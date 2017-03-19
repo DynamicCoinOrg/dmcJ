@@ -935,8 +935,8 @@ public abstract class AbstractBlockChain {
         // static_assert(2 * diffTimestampOutlierCutoff <= diffWindow - 2, "Cut length is too large");
         int timestampCore = diffWindow - 2 * diffTimestampOutlierCutoff;
         if (length > timestampCore) {
-            cutoffBegin = (length - timestampCore + 1) / 2;
-            cutoffEnd   = cutoffBegin + timestampCore;
+            cutoffEnd   = (length - timestampCore + 1) / 2;
+            cutoffBegin = cutoffEnd + timestampCore;
         }
         // assert(/*cutoffBegin >= 0 &&*/ cutoffEnd + 2 <= cutoffBegin && cutoffBegin <= length);
 
