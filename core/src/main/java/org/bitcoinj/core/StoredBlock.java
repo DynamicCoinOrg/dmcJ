@@ -42,7 +42,7 @@ public class StoredBlock implements Serializable {
     public static final int CHAIN_WORK_BYTES = 12;
     public static final int CHAIN_REWARD_BYTES = 12;
     public static final byte[] EMPTY_BYTES = new byte[CHAIN_WORK_BYTES];
-    public static final int COMPACT_SERIALIZED_SIZE = Block.HEADER_SIZE + CHAIN_WORK_BYTES + 4;  // for height
+    public static final int COMPACT_SERIALIZED_SIZE = Block.HEADER_SIZE + CHAIN_WORK_BYTES + CHAIN_REWARD_BYTES + 4 + 8;  // +4 for height, +8 for reward
 
     private Block header;
     private BigInteger chainWork;
@@ -163,7 +163,7 @@ public class StoredBlock implements Serializable {
         BigInteger chainWork = new BigInteger(1, chainWorkBytes);
         int height = buffer.getInt();  // +4 bytes
 
-        long reward = buffer.getLong();
+        long reward = buffer.getLong(); // +8 bytes
         byte[] chainRewardBytes = new byte[StoredBlock.CHAIN_REWARD_BYTES];
         buffer.get(chainRewardBytes);
         BigInteger chainReward = new BigInteger(1, chainRewardBytes);
