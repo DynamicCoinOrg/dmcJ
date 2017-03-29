@@ -98,6 +98,7 @@ public class Block extends Message {
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private transient Sha256Hash hash;
     private transient Sha256Hash pow;
+    private transient Coin reward;
 
     private transient boolean headerParsed;
     private transient boolean transactionsParsed;
@@ -497,6 +498,7 @@ public class Block extends Message {
         unCacheHeader();
         // Clear merkleRoot last as it may end up being parsed during unCacheHeader().
         merkleRoot = null;
+        reward = null;
     }
 
     /**
@@ -526,6 +528,24 @@ public class Block extends Message {
         }
     }
 
+    private Coin calculateReward() {
+        maybeParseTransactions();
+
+        Coin blockFee = Coin.ZERO;
+        Coin coinbaseValue = Coin.ZERO;
+        for (final Transaction tx : transactions) {
+            if (!tx.isCoinBase()) {
+                blockFee = blockFee.add(tx.getFee());
+            } else {
+                for (final TransactionOutput out : tx.getOutputs()) {
+                    coinbaseValue = coinbaseValue.add(out.getValue());
+                }
+            }
+
+        }
+        return coinbaseValue.subtract(blockFee);
+    }
+
     /**
      * Returns the hash of the block (which for a valid, solved block should be below the target) in the form seen on
      * the block explorer. If you call this on block 1 in the production chain
@@ -550,6 +570,12 @@ public class Block extends Message {
         if (pow == null)
             pow = calculatePowHash();
         return pow;
+    }
+
+    public Coin getReward() {
+        if (reward == null)
+            reward = calculateReward();
+        return reward;
     }
 
     /**
@@ -583,6 +609,7 @@ public class Block extends Message {
         block.difficultyTarget = difficultyTarget;
         block.transactions = null;
         block.hash = getHash().duplicate();
+        block.reward = Coin.valueOf(getReward().getValue());
         return block;
     }
 
@@ -883,6 +910,7 @@ public class Block extends Message {
         // Force a recalculation next time the values are needed.
         merkleRoot = null;
         hash = null;
+        reward = null;
     }
 
     /** Returns the version of the block data structure as defined by the Bitcoin protocol. */
@@ -1101,22 +1129,6 @@ public class Block extends Message {
     @VisibleForTesting
     boolean isTransactionBytesValid() {
         return transactionBytesValid;
-    }
-
-    public Coin getReward() {
-        Coin blockFee = Coin.ZERO;
-        Coin coinbaseValue = Coin.ZERO;
-        for (final Transaction tx : getTransactions()) {
-            if (!tx.isCoinBase()) {
-                blockFee.add(tx.getFee());
-            } else {
-                for (final TransactionOutput out : tx.getOutputs()) {
-                    coinbaseValue.add(out.getValue());
-                }
-            }
-
-        }
-        return coinbaseValue.subtract(blockFee);
     }
 
     public void setVersion(long version) {
