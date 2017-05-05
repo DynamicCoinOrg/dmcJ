@@ -48,6 +48,8 @@ public class SPVBlockStore implements BlockStore {
     protected int numHeaders;
     protected NetworkParameters params;
 
+    private transient int readCursor;
+
     protected ReentrantLock lock = Threading.lock("SPVBlockStore");
 
     // The entire ring-buffer is mmapped and accessing it should be as fast as accessing regular memory once it's
@@ -193,7 +195,7 @@ public class SPVBlockStore implements BlockStore {
 
             // Starting from the current tip of the ring work backwards until we have either found the block or
             // wrapped around.
-            int cursor = getRingCursor(buffer);
+            int cursor = getRingReadCursor();
             final int startingPoint = cursor;
             final int fileSize = getFileSize();
             final byte[] targetHashBytes = hash.getBytes();
@@ -210,6 +212,10 @@ public class SPVBlockStore implements BlockStore {
                 if (Arrays.equals(scratch, targetHashBytes)) {
                     // Found the target.
                     StoredBlock storedBlock = StoredBlock.deserializeCompact(params, buffer);
+                    setRingReadCursor(cursor);  // DMC: as we are going backwards in the ring buffer,
+                                                // we may also assume for efficiency that it is better to start
+                                                // traversal from the offset we have accessed previous time, thus
+                                                // introducing ringReadCursor
                     blockCache.put(hash, storedBlock);
                     return storedBlock;
                 }
@@ -298,5 +304,21 @@ public class SPVBlockStore implements BlockStore {
     private void setRingCursor(ByteBuffer buffer, int newCursor) {
         checkArgument(newCursor >= 0);
         buffer.putInt(4, newCursor);
+        readCursor = newCursor;
+    }
+
+    /** Returns the offset from the file start where the latest block was read from or written to. */
+    private int getRingReadCursor() {
+        if (readCursor == 0) {
+            readCursor = getRingCursor(buffer);
+            setRingReadCursor(readCursor);
+        }
+        checkState(readCursor >= FILE_PROLOGUE_BYTES, "Integer overflow");
+        return readCursor;
+    }
+
+    private void setRingReadCursor(int newReadCursor) {
+        checkArgument(newReadCursor >= 0);
+        readCursor = newReadCursor;
     }
 }
