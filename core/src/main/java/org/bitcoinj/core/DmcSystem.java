@@ -39,9 +39,7 @@ public class DmcSystem {
 
     // ok
     public boolean checkBlockReward(Block block, int height, Coin coinbaseValue, Coin fees) throws BlockStoreException {
-        log.info("DmcSystem::checkBlockReward() : block.time = ", block.getTimeSeconds(),
-                ", fees = ", fees.toString(), ", hash = ", block.getHashAsString(),
-                ", height = ", height);
+        log.info("DmcSystem::checkBlockReward() : block.time = {}, fees = {}, hash = {}, height = {}", block.getTimeSeconds(), fees.toString(), block.getHashAsString(), height);
 
         BlockStore blockStore = blockChain.getBlockStore();
 
@@ -78,9 +76,7 @@ public class DmcSystem {
 
     // ok
     public Coin getExpectedBlockReward(Block block, int height) throws BlockStoreException {
-        log.info("DmcSystem::getExpectedBlockReward(): hash = ", block.getHashAsString(),
-                ", height = ", height,
-                ", time = ", block.getTimeSeconds());
+        log.info("DmcSystem::getExpectedBlockReward(): hash = {}, height = {}, time = {}", block.getHashAsString(), height, block.getTimeSeconds());
 
         BlockStore blockStore = blockChain.getBlockStore();
 
@@ -247,12 +243,13 @@ public class DmcSystem {
                     long timestamp = 0; //TODO(dmc): must be 'time'
                     Price price = getGrsApiPrice(timestamp);
                     Usd usdPrice = Usd.valueOf(price.price);
-                    log.info("GRS price for timestamp: time = ", price.time,
-                                                   ", price = ", price.price,
-                                                   ", usdPrice = ", usdPrice.toString());
+                    log.info("GRS price for timestamp: time = {}, price = {}, usdPrice = {}"
+                                                     , price.time
+                                                     , price.price
+                                                     , usdPrice.toString());
                     return usdPrice;
                 } catch (Throwable e) {
-                    log.warn("Exception occured in rpcClient.invoke: ", e.getMessage());
+                    log.warn("Exception occured in rpcClient.invoke: {}", e.getMessage());
                 }
 //                } catch (const boost::thread_interrupted& e) {
 //                    LogPrintf("CGrsApi::GetPrice thread terminated\n");
