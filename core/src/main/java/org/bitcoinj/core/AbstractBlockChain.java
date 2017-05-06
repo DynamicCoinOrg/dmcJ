@@ -875,7 +875,7 @@ public abstract class AbstractBlockChain {
         final long timeDelta = nextBlock.getTimeSeconds() - prev.getTimeSeconds();
         if (timeDelta >= 0 && timeDelta > NetworkParameters.TARGET_SPACING * 2) {
             if (proofOfWorkLimit.compareTo(nextBlock.getDifficultyTargetAsInteger()) < 0)
-                throw new VerificationException("Unexpected change in difficulty for distant blocks at height" + storedPrev.getHeight() +
+                throw new VerificationException("Unexpected change in difficulty for distant blocks at height " + storedPrev.getHeight() +
                         ": " + Long.toHexString(nextBlock.getDifficultyTarget()) + ", but must be >=" +
                         Long.toHexString(Utils.encodeCompactBits(proofOfWorkLimit)));
             else
@@ -911,7 +911,7 @@ public abstract class AbstractBlockChain {
         }
         if (length <= 1) {
             if (nextBlock.getDifficultyTargetAsInteger().compareTo(proofOfWorkLimit) != 0)
-                throw new VerificationException("Unexpected change in difficulty for distant blocks at height" + storedPrev.getHeight() +
+                throw new VerificationException("Unexpected change in difficulty for distant blocks at height " + storedPrev.getHeight() +
                         ": " + Long.toHexString(nextBlock.getDifficultyTarget()) + " vs " +
                         Long.toHexString(prev.getDifficultyTarget()));
             else
@@ -995,7 +995,7 @@ public abstract class AbstractBlockChain {
         final long timeDelta = next.getTimeSeconds() - prev.getTimeSeconds();
         if (timeDelta >= 0 && timeDelta > NetworkParameters.TARGET_SPACING * 2) {
             if (proofOfWorkLimit.compareTo(next.getDifficultyTargetAsInteger()) < 0)
-                throw new VerificationException("Unexpected change in difficulty for distant blocks at height" + storedPrev.getHeight() +
+                throw new VerificationException("Unexpected change in difficulty for distant blocks at height " + storedPrev.getHeight() +
                         ": " + Long.toHexString(next.getDifficultyTarget()) + ", but must be >=" +
                         Long.toHexString(proofOfWorkLimitNBits));
             else
