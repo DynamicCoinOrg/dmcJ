@@ -42,7 +42,7 @@ public class StoredBlock implements Serializable {
     public static final int CHAIN_WORK_BYTES = 12;
     public static final int CHAIN_REWARD_BYTES = 12;
     public static final byte[] EMPTY_BYTES = new byte[CHAIN_WORK_BYTES];
-    public static final int COMPACT_SERIALIZED_SIZE = Block.HEADER_SIZE + CHAIN_WORK_BYTES + CHAIN_REWARD_BYTES + 4 + 8;  // +4 for height, +8 for reward
+    public static final int COMPACT_SERIALIZED_SIZE = Block.HEADER_SIZE + CHAIN_WORK_BYTES + CHAIN_REWARD_BYTES + 4 + 8 + 4 + 4;  // +4 for height, +8 for reward, +4 +4 for have(reward|ChainReward)
 
     private Block header;
     private BigInteger chainWork;
@@ -115,8 +115,14 @@ public class StoredBlock implements Serializable {
         // the largest amount of work done not the tallest.
         BigInteger chainWork = this.chainWork.add(block.getWork());
         int height = this.height + 1;
+
         Coin reward = block.getReward();
-        BigInteger chainReward = this.chainReward.add(BigInteger.valueOf(reward.getValue()));
+        BigInteger chainReward = null;
+        // DMC: if block reward can't be determined (reward == null) then all ongoing chainReward must be null as well,
+        //  propagating indeterminacy
+        if (this.chainReward != null) {
+            chainReward = reward == null ? null : this.chainReward.add(BigInteger.valueOf(reward.getValue()));
+        }
         return new StoredBlock(block, chainWork, height, reward, chainReward);
     }
 
@@ -141,8 +147,13 @@ public class StoredBlock implements Serializable {
         buffer.put(chainWorkBytes);
         buffer.putInt(getHeight());
 
-        buffer.putLong(getReward().getValue());
-        byte[] chainRewardBytes = getChainReward().toByteArray();
+        Coin reward = getReward();
+        buffer.putInt(reward == null ? 0 : 1);
+        buffer.putLong(reward == null ? 0 : reward.getValue());
+
+        BigInteger chainReward = getChainReward();
+        buffer.putInt(chainReward == null ? 0 : 1);
+        byte[] chainRewardBytes = chainReward == null ? new byte[1] : chainReward.toByteArray();
         checkState(chainRewardBytes.length <= CHAIN_REWARD_BYTES, "Ran out of space to store chain reward!");
         if (chainRewardBytes.length < CHAIN_REWARD_BYTES) {
             // Pad to the right size.
@@ -163,14 +174,18 @@ public class StoredBlock implements Serializable {
         BigInteger chainWork = new BigInteger(1, chainWorkBytes);
         int height = buffer.getInt();  // +4 bytes
 
+        int haveReward = buffer.getInt();   // +4 bytes
         long reward = buffer.getLong(); // +8 bytes
+
+        int haveChainReward = buffer.getInt();  // +4 bytes
         byte[] chainRewardBytes = new byte[StoredBlock.CHAIN_REWARD_BYTES];
         buffer.get(chainRewardBytes);
         BigInteger chainReward = new BigInteger(1, chainRewardBytes);
 
         byte[] header = new byte[Block.HEADER_SIZE + 1];    // Extra byte for the 00 transactions length.
         buffer.get(header, 0, Block.HEADER_SIZE);
-        return new StoredBlock(new Block(params, header), chainWork, height, Coin.valueOf(reward), chainReward);
+        return new StoredBlock(new Block(params, header), chainWork, height, haveReward == 1      ? Coin.valueOf(reward) : null
+                                                                           , haveChainReward == 1 ? chainReward          : null);
     }
 
     @Override

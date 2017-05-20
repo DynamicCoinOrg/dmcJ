@@ -99,6 +99,7 @@ public class Block extends Message {
     private transient Sha256Hash hash;
     private transient Sha256Hash pow;
     private transient Coin reward;
+    private transient boolean rewardCantBeCalculated = false;
 
     private transient boolean headerParsed;
     private transient boolean transactionsParsed;
@@ -533,8 +534,19 @@ public class Block extends Message {
 
         Coin blockFee = Coin.ZERO;
         Coin coinbaseValue = Coin.ZERO;
+
+        if (transactions == null) {
+            rewardCantBeCalculated = true;
+            return null;
+        }
+
         for (final Transaction tx : transactions) {
             if (!tx.isCoinBase()) {
+                Coin fee = tx.getFee();
+                if (fee == null) {
+                    rewardCantBeCalculated = true;
+                    return null;    // DMC: block reward can't be determined
+                }
                 blockFee = blockFee.add(tx.getFee());
             } else {
                 for (final TransactionOutput out : tx.getOutputs()) {
@@ -573,6 +585,8 @@ public class Block extends Message {
     }
 
     public Coin getReward() {
+        if (rewardCantBeCalculated)
+            return null;
         if (reward == null)
             reward = calculateReward();
         return reward;
@@ -609,7 +623,14 @@ public class Block extends Message {
         block.difficultyTarget = difficultyTarget;
         block.transactions = null;
         block.hash = getHash().duplicate();
-        block.reward = Coin.valueOf(getReward().getValue());
+        Coin reward = getReward();
+        if (reward == null) {
+            // block reward can't be determined
+            rewardCantBeCalculated = true;
+            block.reward = null;
+        } else {
+            block.reward = Coin.valueOf(reward.getValue());
+        }
         return block;
     }
 
