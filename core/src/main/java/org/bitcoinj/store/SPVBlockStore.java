@@ -195,17 +195,13 @@ public class SPVBlockStore implements BlockStore {
 
             // Starting from the current tip of the ring work backwards until we have either found the block or
             // wrapped around.
-            int cursor = getRingReadCursor();
-            final int startingPoint = cursor;
             final int fileSize = getFileSize();
+            int cursor = getRingReadCursor() - RECORD_SIZE;
+                cursor = cursor < FILE_PROLOGUE_BYTES ? fileSize - RECORD_SIZE : cursor;    // wrap around if necessary
+            final int startingPoint = cursor;
             final byte[] targetHashBytes = hash.getBytes();
             byte[] scratch = new byte[32];
             do {
-                cursor -= RECORD_SIZE;
-                if (cursor < FILE_PROLOGUE_BYTES) {
-                    // We hit the start, so wrap around.
-                    cursor = fileSize - RECORD_SIZE;
-                }
                 // Cursor is now at the start of the next record to check, so read the hash and compare it.
                 buffer.position(cursor);
                 buffer.get(scratch);
@@ -218,6 +214,11 @@ public class SPVBlockStore implements BlockStore {
                                                 // introducing ringReadCursor
                     blockCache.put(hash, storedBlock);
                     return storedBlock;
+                }
+                cursor -= RECORD_SIZE;
+                if (cursor < FILE_PROLOGUE_BYTES) {
+                    // We hit the start, so wrap around.
+                    cursor = fileSize - RECORD_SIZE;
                 }
             } while (cursor != startingPoint);
             // Not found.
