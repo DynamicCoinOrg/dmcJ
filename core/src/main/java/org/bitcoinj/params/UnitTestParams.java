@@ -19,6 +19,7 @@ package org.bitcoinj.params;
 
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Utils;
 
 import java.math.BigInteger;
 
@@ -36,13 +37,13 @@ public class UnitTestParams extends NetworkParameters {
         addressHeader = 111;
         p2shHeader = 196;
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
-        maxTarget = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+        maxTarget = new BigInteger("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0", 16);
 
         genesisReward = COIN.multiply(1);
         CharSequence inputScriptHex = "0004ffff001e01041d44796e616d6963436f696e2067656e65736973202f20546573744e6574";
         genesisBlock = createGenesis(this, inputScriptHex);
         genesisBlock.setTime(System.currentTimeMillis() / 1000);
-        genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
+        genesisBlock.setDifficultyTarget(Utils.encodeCompactBits(new BigInteger("0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16))/*Block.EASIEST_DIFFICULTY_TARGET*/);
         genesisBlock.solve();
         port = 17333;
         interval = 10;
