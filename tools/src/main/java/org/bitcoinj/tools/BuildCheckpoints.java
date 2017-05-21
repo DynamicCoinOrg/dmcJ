@@ -19,12 +19,12 @@ package org.bitcoinj.tools;
 
 import org.bitcoinj.core.*;
 import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.store.*;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import com.google.common.base.Charsets;
 
+import javax.annotation.Nullable;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,9 +37,54 @@ import java.nio.ByteBuffer;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 import static com.google.common.base.Preconditions.checkState;
+
+class Listener extends AbstractBlockChainListener {
+
+    private final NetworkParameters PARAMS = MainNetParams.get();
+    boolean once = true;
+    TreeMap<Integer, StoredBlock> checkpoints;
+    BlockStore store;
+    long oneMonthAgo;
+
+    Listener(TreeMap<Integer,StoredBlock> checkpoints, BlockStore store, long oneMonthAgo) {
+        this.checkpoints = checkpoints;
+        this.store = store;
+        this.oneMonthAgo = oneMonthAgo;
+    }
+
+    @Override
+    public void notifyNewBestBlock(StoredBlock block) throws VerificationException {
+        int height = block.getHeight();
+        long time = block.getHeader().getTimeSeconds();
+        if (height % PARAMS.getInterval() == 0 && time <= oneMonthAgo) {
+            System.out.println(String.format("Checkpointing block %s at height %d",
+                    block.getHeader().getHash(), block.getHeight()));
+            checkpoints.put(height, block);
+        } else if (time > oneMonthAgo && once) {
+            try {
+                System.out.println(String.format("======================================="));
+                once = false;
+                StoredBlock prev = block.getPrev(store);
+                int c = 0;
+                while (prev != null && c <= PARAMS.getInterval() * 2) {
+                    System.out.println(String.format("Checkpointing block %s at height %d",
+                            prev.getHeader().getHash(), prev.getHeight()));
+                    StoredBlock oldBlock = checkpoints.put(prev.getHeight(), prev);
+                    prev = prev.getPrev(store);
+                    c += 1;
+                }
+                System.out.println(String.format("======================================="));
+            } catch (BlockStoreException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
 
 /**
  * Downloads and verifies a full chain from your local peer, emitting checkpoints at each difficulty transition period
@@ -68,17 +113,7 @@ public class BuildCheckpoints {
 
         final long oneMonthAgo = now - (86400 * 30);
 
-        chain.addListener(new AbstractBlockChainListener() {
-            @Override
-            public void notifyNewBestBlock(StoredBlock block) throws VerificationException {
-                int height = block.getHeight();
-                if (height % PARAMS.getInterval() == 0 && block.getHeader().getTimeSeconds() <= oneMonthAgo) {
-                    System.out.println(String.format("Checkpointing block %s at height %d",
-                            block.getHeader().getHash(), block.getHeight()));
-                    checkpoints.put(height, block);
-                }
-            }
-        }, Threading.SAME_THREAD);
+        chain.addListener(new Listener(checkpoints, store, oneMonthAgo), Threading.SAME_THREAD);
 
         peerGroup.startAsync();
         peerGroup.awaitRunning();
