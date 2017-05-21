@@ -40,9 +40,7 @@ import java.nio.ByteOrder;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -57,15 +55,15 @@ import static com.google.common.base.Preconditions.*;
  *
  * <p>Checkpoints are used by the SPV {@link BlockChain} to initialize fresh
  * {@link org.bitcoinj.store.SPVBlockStore}s. They are not used by fully validating mode, which instead has a
- * different concept of checkpoints that are used to hard-code the validity of blocks that violate BIP30 (duplicate
- * coinbase transactions). Those "checkpoints" can be found in NetworkParameters.</p>
+ * different concept of checkpointsByTime that are used to hard-code the validity of blocks that violate BIP30 (duplicate
+ * coinbase transactions). Those "checkpointsByTime" can be found in NetworkParameters.</p>
  *
  * <p>The file format consists of the string "CHECKPOINTS 1", followed by a uint32 containing the number of signatures
  * to read. The value may not be larger than 256 (so it could have been a byte but isn't for historical reasons).
  * If the number of signatures is larger than zero, each 65 byte ECDSA secp256k1 signature then follows. The signatures
  * sign the hash of all bytes that follow the last signature.</p>
  *
- * <p>After the signatures come an int32 containing the number of checkpoints in the file. Then each checkpoint follows
+ * <p>After the signatures come an int32 containing the number of checkpointsByTime in the file. Then each checkpoint follows
  * one after the other. A checkpoint is 12 bytes for the total work done field, 4 bytes for the height, 80 bytes
  * for the block header and then 1 zero byte at the end (i.e. number of transactions in the block: always zero).</p>
  */
@@ -77,7 +75,8 @@ public class CheckpointManager {
     private static final int MAX_SIGNATURES = 256;
 
     // Map of block header time to data.
-    protected final TreeMap<Long, StoredBlock> checkpoints = new TreeMap<Long, StoredBlock>();
+    protected final TreeMap<Long, StoredBlock> checkpointsByTime = new TreeMap<Long, StoredBlock>();
+    protected final TreeMap<Integer, StoredBlock> checkpointsByHeight = new TreeMap<Integer, StoredBlock>();
 
     protected final NetworkParameters params;
     protected final Sha256Hash dataHash;
@@ -126,10 +125,10 @@ public class CheckpointManager {
                     throw new IOException("Incomplete read whilst loading checkpoints.");
                 StoredBlock block = StoredBlock.deserializeCompact(params, buffer);
                 buffer.position(0);
-                checkpoints.put(block.getHeader().getTimeSeconds(), block);
+                put(block);
             }
             Sha256Hash dataHash = new Sha256Hash(digest.digest());
-            log.info("Read {} checkpoints, hash is {}", checkpoints.size(), dataHash);
+            log.info("Read {} checkpoints, hash is {}", checkpointsByTime.size(), dataHash);
             return dataHash;
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);  // Cannot happen.
@@ -165,14 +164,26 @@ public class CheckpointManager {
                 buffer.put(bytes);
                 buffer.position(0);
                 StoredBlock block = StoredBlock.deserializeCompact(params, buffer);
-                checkpoints.put(block.getHeader().getTimeSeconds(), block);
+                put(block);
             }
             HashCode hash = hasher.hash();
-            log.info("Read {} checkpoints, hash is {}", checkpoints.size(), hash);
+            log.info("Read {} checkpoints, hash is {}", checkpointsByTime.size(), hash);
             return new Sha256Hash(hash.asBytes());
         } finally {
             if (reader != null) reader.close();
         }
+    }
+
+    protected StoredBlock put(StoredBlock block) {
+        checkpointsByHeight.put(block.getHeight(), block);
+        StoredBlock oldBlock = checkpointsByTime.put(block.getHeader().getTimeSeconds(), block);
+        if (oldBlock != null) {
+            StoredBlock blockToPreserve = block.getHeight() < oldBlock.getHeight() ? block : oldBlock;
+            checkpointsByTime.put(blockToPreserve.getHeader().getTimeSeconds(), blockToPreserve);
+            log.info("Replaced block {} with block {}", oldBlock, blockToPreserve);
+            return blockToPreserve;
+        }
+        return block;
     }
 
     /**
@@ -183,7 +194,7 @@ public class CheckpointManager {
         try {
             checkArgument(time > params.getGenesisBlock().getTimeSeconds());
             // This is thread safe because the map never changes after creation.
-            Map.Entry<Long, StoredBlock> entry = checkpoints.floorEntry(time);
+            Map.Entry<Long, StoredBlock> entry = checkpointsByTime.floorEntry(time);
             if (entry != null) return entry.getValue();
             Block genesis = params.getGenesisBlock().cloneAsHeader();
             return new StoredBlock(genesis, genesis.getWork(), 0, params.getGenesisBlock().getReward(), BigInteger.valueOf(params.getGenesisBlock().getReward().getValue()));
@@ -192,9 +203,13 @@ public class CheckpointManager {
         }
     }
 
+    public StoredBlock getCheckpointAtHeight(int height) {
+        return checkpointsByHeight.get(height);
+    }
+
     /** Returns the number of checkpoints that were loaded. */
     public int numCheckpoints() {
-        return checkpoints.size();
+        return checkpointsByHeight.size();
     }
 
     /** Returns a hash of the concatenated checkpoint data. */
@@ -221,6 +236,12 @@ public class CheckpointManager {
         CheckpointManager manager = new CheckpointManager(params, stream);
         StoredBlock checkpoint = manager.getCheckpointBefore(time);
         store.put(checkpoint);
+        int threshold = Math.max(0,checkpoint.getHeight() - params.getInterval());
+        int i = checkpoint.getHeight();
+        while (i >= threshold) {
+            store.put(manager.getCheckpointAtHeight(i));
+            i -= 1;
+        }
         store.setChainHead(checkpoint);
     }
 }
