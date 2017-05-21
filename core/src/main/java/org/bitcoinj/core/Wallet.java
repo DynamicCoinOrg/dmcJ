@@ -2580,7 +2580,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             StringBuilder builder = new StringBuilder();
             Coin estimatedBalance = getBalance(BalanceType.ESTIMATED);
             Coin availableBalance = getBalance(BalanceType.AVAILABLE);
-            builder.append(String.format("Wallet containing %s BTC (available: %s BTC) in:%n",
+            builder.append(String.format("Wallet containing %s DMC (available: %s DMC) in:%n",
                     estimatedBalance.toPlainString(), availableBalance.toPlainString()));
             builder.append(String.format("  %d pending transactions%n", pending.size()));
             builder.append(String.format("  %d unspent transactions%n", unspent.size()));
@@ -3448,7 +3448,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             List<TransactionInput> originalInputs = new ArrayList<TransactionInput>(req.tx.getInputs());
             int opReturnCount = 0;
 
-            // We need to know if we need to add an additional fee because one of our values are smaller than 0.01 BTC
+            // We need to know if we need to add an additional fee because one of our values are smaller than 0.01 DMC
             boolean needAtLeastReferenceFee = false;
             if (req.ensureMinRequiredFee && !req.emptyWallet) { // Min fee checking is handled later for emptyWallet.
                 for (TransactionOutput output : req.tx.getOutputs()) {
@@ -4150,7 +4150,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             if (additionalValueSelected != null)
                 change = change.add(additionalValueSelected);
 
-            // If change is < 0.01 BTC, we will need to have at least minfee to be accepted by the network
+            // If change is < 0.01 DMC, we will need to have at least minfee to be accepted by the network
             if (req.ensureMinRequiredFee && !change.equals(Coin.ZERO) &&
                     change.compareTo(Coin.CENT) < 0 && fees.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0) {
                 // This solution may fit into category 2, but it may also be category 3, we'll check that later

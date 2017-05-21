@@ -46,22 +46,22 @@ import org.bitcoinj.core.Monetary;
  */
 public final class MonetaryFormat {
 
-    /** Standard format for the BTC denomination. */
-    public static final MonetaryFormat BTC = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(2, 3);
-    /** Standard format for the mBTC denomination. */
-    public static final MonetaryFormat MBTC = new MonetaryFormat().shift(3).minDecimals(2).optionalDecimals(2);
-    /** Standard format for the µBTC denomination. */
-    public static final MonetaryFormat UBTC = new MonetaryFormat().shift(6).minDecimals(0).optionalDecimals(2);
+    /** Standard format for the DMC denomination. */
+    public static final MonetaryFormat DMC = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(2, 3);
+    /** Standard format for the mDMC denomination. */
+    public static final MonetaryFormat MDMC = new MonetaryFormat().shift(3).minDecimals(2).optionalDecimals(2);
+    /** Standard format for the µDMC denomination. */
+    public static final MonetaryFormat UDMC = new MonetaryFormat().shift(6).minDecimals(0).optionalDecimals(2);
     /** Standard format for fiat amounts. */
     public static final MonetaryFormat FIAT = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(2, 1);
     /** Standard format for USD denominations. */
     public static final MonetaryFormat USD = FIAT;
-    /** Currency code for base 1 Bitcoin. */
-    public static final String CODE_BTC = "BTC";
-    /** Currency code for base 1/1000 Bitcoin. */
-    public static final String CODE_MBTC = "mBTC";
-    /** Currency code for base 1/1000000 Bitcoin. */
-    public static final String CODE_UBTC = "µBTC";
+    /** Currency code for base 1 DynamicCoin. */
+    public static final String CODE_DMC = "DMC";
+    /** Currency code for base 1/1000 DynamicCoin. */
+    public static final String CODE_MDMC = "mDMC";
+    /** Currency code for base 1/1000000 DynamicCoin. */
+    public static final String CODE_UDMC = "µDMC";
     /** Currency code for base 1 USD. */
     public static final String CODE_USD = "USD";
 
@@ -303,9 +303,9 @@ public final class MonetaryFormat {
         this.shift = 0;
         this.roundingMode = RoundingMode.HALF_UP;
         this.codes = new HashMap<Integer, String>();
-        this.codes.put(0, CODE_BTC);
-        this.codes.put(3, CODE_MBTC);
-        this.codes.put(6, CODE_UBTC);
+        this.codes.put(0, CODE_DMC);
+        this.codes.put(3, CODE_MDMC);
+        this.codes.put(6, CODE_UDMC);
         this.codeSeparator = ' ';
         this.codePrefixed = true;
     }
