@@ -376,19 +376,19 @@ public abstract class AbstractBlockChain {
             }
 
             // If we want to verify transactions (ie we are running with full blocks), verify that block has transactions
-            if (shouldVerifyTransactions() && block.transactions == null)
+            if (shouldVerifyTransactions() && block.transactions == null /* DMC: replace with consensusCheckEnabled()? – needed for consensus-only mode (because transactions)*/ )
                 throw new VerificationException("Got a block header while running in full-block mode");
 
             // Check for already-seen block, but only for full pruned mode, where the DB is
             // more likely able to handle these queries quickly.
-            if (shouldVerifyTransactions() && blockStore.get(block.getHash()) != null) {
+            if (shouldVerifyTransactions() && blockStore.get(block.getHash()) != null /* DMC: fullCheckEnabled()/fullStoreMode() – no need for consensus-only mode*/) {
                 return true;
             }
 
             // Does this block contain any transactions we might care about? Check this up front before verifying the
             // blocks validity so we can skip the merkle root verification if the contents aren't interesting. This saves
             // a lot of time for big blocks.
-            boolean contentsImportant = shouldVerifyTransactions();
+            boolean contentsImportant = shouldVerifyTransactions() /* DMC: fullCheckEnabled() – no need for consensus-only mode*/;
             if (block.transactions != null) {
                 contentsImportant = contentsImportant || containsRelevantTransactions(block);
             }
@@ -453,7 +453,7 @@ public abstract class AbstractBlockChain {
     // expensiveChecks enables checks that require looking at blocks further back in the chain
     // than the previous one when connecting (eg median timestamp check)
     // It could be exposed, but for now we just set it to shouldVerifyTransactions()
-    private void connectBlock(final Block block, StoredBlock storedPrev, boolean expensiveChecks,
+    private void connectBlock(final Block block, StoredBlock storedPrev, boolean expensiveChecks /* DMC: fullCheckEnabled()*/,
                               @Nullable final List<Sha256Hash> filteredTxHashList,
                               @Nullable final Map<Sha256Hash, Transaction> filteredTxn) throws BlockStoreException, VerificationException, PrunedException {
         checkState(lock.isHeldByCurrentThread());
@@ -461,7 +461,7 @@ public abstract class AbstractBlockChain {
         // Check that we aren't connecting a block that fails a checkpoint check
         if (!params.passesCheckpoint(storedPrev.getHeight() + 1, block.getHash()))
             throw new VerificationException("Block failed checkpoint lockin at " + (storedPrev.getHeight() + 1));
-        if (shouldVerifyTransactions()) {
+        if (shouldVerifyTransactions() /* DMC: fullCheckEnabled()*/) {
             checkNotNull(block.transactions);
             for (Transaction tx : block.transactions)
                 if (!tx.isFinal(storedPrev.getHeight() + 1, block.getTimeSeconds()))
@@ -480,7 +480,7 @@ public abstract class AbstractBlockChain {
             
             // This block connects to the best known block, it is a normal continuation of the system.
             TransactionOutputChanges txOutChanges = null;
-            if (shouldVerifyTransactions())
+            if (shouldVerifyTransactions() /* DMC: fullCheckEnabled() */)
                 txOutChanges = connectTransactions(storedPrev.getHeight() + 1, block);
             StoredBlock newStoredBlock = addToBlockStore(storedPrev,
                     block.transactions == null ? block : block.cloneAsHeader(), txOutChanges);

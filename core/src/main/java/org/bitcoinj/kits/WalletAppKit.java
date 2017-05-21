@@ -266,6 +266,10 @@ public class WalletAppKit extends AbstractIdleService {
                 }
                 CheckpointManager.checkpoint(params, checkpoints, vStore, time);
             }
+            // Chain must have a valid ChainHead->...->PreviousCheckpoint
+            //   or ChainHead->...->Genesis path (which one is shorter) or head being Genesis prior to full function.
+            //   The only case we don't yet satisfy this condition is being using checkpoints without any previously stored
+            //   blocks
             vChain = new BlockChain(params, vStore);
             vPeerGroup = createPeerGroup();
             if (this.userAgent != null)
