@@ -117,7 +117,7 @@ public class PaymentSession {
             throws PaymentProtocolException {
         String url = uri.getPaymentRequestUrl();
         if (url == null)
-            throw new PaymentProtocolException.InvalidPaymentRequestURL("No payment request URL (r= parameter) in BitcoinURI " + uri);
+            throw new PaymentProtocolException.InvalidPaymentRequestURL("No payment request URL (r= parameter) in DynamicCoinURI " + uri);
         try {
             return fetchPaymentRequest(new URI(url), verifyPki, trustStoreLoader);
         } catch (URISyntaxException e) {

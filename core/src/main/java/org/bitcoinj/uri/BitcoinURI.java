@@ -54,8 +54,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <p>The following input forms are accepted:</p>
  *
  * <ul>
- * <li>{@code bitcoin:<address>}</li>
- * <li>{@code bitcoin:<address>?<name1>=<value1>&<name2>=<value2>} with multiple
+ * <li>{@code dynamiccoin:<address>}</li>
+ * <li>{@code dynamiccoin:<address>?<name1>=<value1>&<name2>=<value2>} with multiple
  * additional name/value pairs</li>
  * </ul>
  *
@@ -93,7 +93,7 @@ public class BitcoinURI {
     public static final String FIELD_ADDRESS = "address";
     public static final String FIELD_PAYMENT_REQUEST_URL = "r";
 
-    public static final String BITCOIN_SCHEME = "bitcoin";
+    public static final String BITCOIN_SCHEME = "dynamiccoin";
     private static final String ENCODED_SPACE_CHARACTER = "%20";
     private static final String AMPERSAND_SEPARATOR = "&";
     private static final String QUESTION_MARK_SEPARATOR = "?";
@@ -135,7 +135,7 @@ public class BitcoinURI {
         }
 
         // URI is formed as  bitcoin:<address>?<query parameters>
-        // blockchain.info generates URIs of non-BIP compliant form bitcoin://address?....
+        // blockchain.info generates URIs of non-BIP compliant form dynamiccoin://address?....
         // We support both until Ben fixes his code.
         
         // Remove the bitcoin scheme.
@@ -144,10 +144,10 @@ public class BitcoinURI {
         // the & (%26) in Tom and Jerry gets interpreted as a separator and the label then gets parsed
         // as 'Tom ' instead of 'Tom & Jerry')
         String schemeSpecificPart;
-        if (input.startsWith("bitcoin://")) {
-            schemeSpecificPart = input.substring("bitcoin://".length());
-        } else if (input.startsWith("bitcoin:")) {
-            schemeSpecificPart = input.substring("bitcoin:".length());
+        if (input.startsWith("dynamiccoin://")) {
+            schemeSpecificPart = input.substring("dynamiccoin://".length());
+        } else if (input.startsWith("dynamiccoin:")) {
+            schemeSpecificPart = input.substring("dynamiccoin:".length());
         } else {
             throw new BitcoinURIParseException("Unsupported URI scheme: " + uri.getScheme());
         }
@@ -155,7 +155,7 @@ public class BitcoinURI {
         // Split off the address from the rest of the query parameters.
         String[] addressSplitTokens = schemeSpecificPart.split("\\?", 2);
         if (addressSplitTokens.length == 0)
-            throw new BitcoinURIParseException("No data found after the bitcoin: prefix");
+            throw new BitcoinURIParseException("No data found after the dynamiccoin: prefix");
         String addressToken = addressSplitTokens[0];  // may be empty!
 
         String[] nameValuePairTokens;
@@ -195,10 +195,10 @@ public class BitcoinURI {
         for (String nameValuePairToken : nameValuePairTokens) {
             final int sepIndex = nameValuePairToken.indexOf('=');
             if (sepIndex == -1)
-                throw new BitcoinURIParseException("Malformed Bitcoin URI - no separator in '" +
+                throw new BitcoinURIParseException("Malformed DynamicCoin URI - no separator in '" +
                         nameValuePairToken + "'");
             if (sepIndex == 0)
-                throw new BitcoinURIParseException("Malformed Bitcoin URI - empty name '" +
+                throw new BitcoinURIParseException("Malformed DynamicCoin URI - empty name '" +
                         nameValuePairToken + "'");
             final String nameToken = nameValuePairToken.substring(0, sepIndex).toLowerCase(Locale.ENGLISH);
             final String valueToken = nameValuePairToken.substring(sepIndex + 1);
@@ -319,7 +319,7 @@ public class BitcoinURI {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder("BitcoinURI[");
+        StringBuilder builder = new StringBuilder("DynamicCoinURI[");
         boolean first = true;
         for (Map.Entry<String, Object> entry : parameterMap.entrySet()) {
             if (first) {
